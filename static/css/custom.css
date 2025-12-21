@@ -1,0 +1,237 @@
+/* ========================================
+   GolubBozor - Custom Dark Luxury Styles
+   ======================================== */
+
+/* Skeleton Loading Animation */
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #1E1E1E 0px,
+        #2A2A2A 40px,
+        #1E1E1E 80px
+    );
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-card {
+    @apply bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800;
+    min-height: 400px;
+}
+
+.skeleton-image {
+    @apply w-full h-64 skeleton;
+}
+
+.skeleton-text {
+    @apply h-4 skeleton rounded mb-2;
+}
+
+.skeleton-title {
+    @apply h-6 skeleton rounded mb-3;
+    width: 70%;
+}
+
+/* Glassmorphism Effects */
+.glass {
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-gold {
+    background: rgba(212, 175, 55, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* Bottom Navigation Glassmorphism */
+.bottom-nav {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.bottom-nav-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-nav-item:active {
+    transform: scale(0.95);
+}
+
+.bottom-nav-item.active {
+    color: #D4AF37;
+}
+
+.bottom-nav-item.active svg {
+    transform: scale(1.1);
+}
+
+/* Smooth Hover Transitions */
+.hover-gold {
+    transition: all 0.3s ease;
+}
+
+.hover-gold:hover {
+    color: #D4AF37;
+    transform: translateY(-2px);
+}
+
+/* Card Hover Effect */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+}
+
+/* VIP Glow Effect */
+.vip-glow {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    animation: pulse-gold 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gold {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    }
+}
+
+/* Lightbox Override */
+.sl-overlay {
+    background: rgba(18, 18, 18, 0.95) !important;
+}
+
+.sl-wrapper .sl-close,
+.sl-wrapper .sl-counter {
+    color: #D4AF37 !important;
+}
+
+/* Z-Index Management */
+.z-nav {
+    z-index: 40;
+}
+
+.z-modal {
+    z-index: 50;
+}
+
+.z-snow {
+    z-index: 30;
+    pointer-events: none;
+}
+
+.z-overlay {
+    z-index: 35;
+}
+
+/* Mobile Safe Area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-nav {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Price Tag Animation */
+.price-pulse {
+    animation: price-pulse 2s ease-in-out infinite;
+}
+
+@keyframes price-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Luxury Button */
+.btn-luxury {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-luxury::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.btn-luxury:hover::before {
+    left: 100%;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #C5A028;
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+    h1 {
+        font-size: 2rem;
+    }
+    h2 {
+        font-size: 1.5rem;
+    }
+}

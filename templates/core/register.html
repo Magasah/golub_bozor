@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация - ГолубБозор{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold gold-text mb-2">Регистрация</h1>
+        <p class="text-gray-400">Присоединяйтесь к премиум-рынку голубей</p>
+    </div>
+    
+    <div class="bg-[#1E1E1E] rounded-lg p-8 border border-gray-800">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Username -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Имя пользователя
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                {% else %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.username.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Email -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Email
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Password 1 -->
+            <div>
+                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Пароль
+                </label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+                {% else %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.password1.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Password 2 -->
+            <div>
+                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Подтвердите пароль
+                </label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="p-4 bg-red-900 border border-red-700 rounded-lg">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Submit Button -->
+            <button type="submit" class="w-full px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                Зарегистрироваться
+            </button>
+        </form>
+        
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-400">
+                Уже есть аккаунт? 
+                <a href="{% url 'login' %}" class="text-[#D4AF37] hover:underline font-semibold">Войти</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

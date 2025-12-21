@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if pigeon %}Редактировать{% else %}Добавить объявление{% endif %} - ГолубБозор{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl md:text-4xl font-bold gold-text mb-8">
+        {% if pigeon %}
+        Редактировать объявление
+        {% else %}
+        Добавить новое объявление
+        {% endif %}
+    </h1>
+    
+    <div class="bg-[#1E1E1E] rounded-lg p-6 md:p-8 border border-gray-800">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Название *
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Breed, Game Type, Sex - Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Breed -->
+                <div>
+                    <label for="{{ form.breed.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Порода *
+                    </label>
+                    {{ form.breed }}
+                    {% if form.breed.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.breed.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Game Type -->
+                <div>
+                    <label for="{{ form.game_type.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Тип *
+                    </label>
+                    {{ form.game_type }}
+                    {% if form.game_type.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.game_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Sex -->
+                <div>
+                    <label for="{{ form.sex.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Пол *
+                    </label>
+                    {{ form.sex }}
+                    {% if form.sex.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.sex.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- City -->
+                <div>
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        🏙️ Город *
+                    </label>
+                    {{ form.city }}
+                    {% if form.city.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Price -->
+            <div>
+                <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Цена (TJS) *
+                </label>
+                {{ form.price }}
+                {% if form.price.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Описание *
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Image -->
+            <div>
+                <label for="{{ form.image.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Фото *
+                </label>
+                {% if pigeon and pigeon.image %}
+                    <div class="mb-3">
+                        <img src="{{ pigeon.image.url }}" alt="Current" class="w-32 h-32 object-cover rounded border-2 border-gray-700">
+                        <p class="text-sm text-gray-400 mt-1">Текущее фото</p>
+                    </div>
+                {% endif %}
+                {{ form.image }}
+                {% if form.image.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Contact Information Section -->
+            <div class="border-t border-gray-700 pt-6 mt-6">
+                <h3 class="text-xl font-bold text-[#D4AF37] mb-4">📞 Контактная информация</h3>
+                
+                <div class="space-y-4">
+                    <!-- Phone -->
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Телефон *
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Формат: +992XXXXXXXXX</p>
+                    </div>
+                    
+                    <!-- WhatsApp -->
+                    <div>
+                        <label for="{{ form.whatsapp_number.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            WhatsApp (необязательно)
+                        </label>
+                        {{ form.whatsapp_number }}
+                        {% if form.whatsapp_number.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.whatsapp_number.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Номер WhatsApp (формат: +992XXXXXXXXX)</p>
+                    </div>
+                    
+                    <!-- Telegram -->
+                    <div>
+                        <label for="{{ form.telegram_username.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Telegram (необязательно)
+                        </label>
+                        {{ form.telegram_username }}
+                        {% if form.telegram_username.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.telegram_username.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Ваш Telegram username без @ (например: username)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Video URL -->
+            <div>
+                <label for="{{ form.video_url.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    🎥 Видео YouTube (необязательно)
+                </label>
+                {{ form.video_url }}
+                {% if form.video_url.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.video_url.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">
+                    Вставьте ссылку на YouTube видео
+                </p>
+            </div>
+            
+            <!-- VIP -->
+            <div class="flex items-start space-x-3 p-4 bg-[#121212] rounded-lg">
+                {{ form.is_vip }}
+                <label for="{{ form.is_vip.id_for_label }}" class="text-sm text-gray-300 cursor-pointer">
+                    <span class="font-semibold text-[#D4AF37] text-base">⭐ VIP размещение</span>
+                    <span class="block text-xs text-gray-500 mt-1">Ваше объявление будет выделено золотой рамкой и показано первым</span>
+                    <a href="{% url 'vip_request' %}" class="text-[#D4AF37] hover:underline text-xs mt-1 inline-block">Подробнее о VIP →</a>
+                </label>
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="p-4 bg-red-900 border border-red-700 rounded-lg">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Moderation Notice -->
+            <div class="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="text-sm text-blue-300 font-semibold mb-1">ℹ️ Модерация объявлений</p>
+                        <p class="text-xs text-gray-400">
+                            {% if pigeon %}
+                            После сохранения изменений объявление будет отправлено на повторную модерацию.
+                            {% else %}
+                            Ваше объявление появится на сайте после проверки модератором (обычно в течение 24 часов).
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit" class="flex-1 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                    {% if pigeon %}💾 Сохранить изменения{% else %}📤 Опубликовать{% endif %}
+                </button>
+                <a href="{% if pigeon %}{% url 'pigeon_detail' pigeon.pk %}{% else %}{% url 'home' %}{% endif %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

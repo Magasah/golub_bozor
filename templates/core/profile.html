@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Продавец {{ seller.username }} - ГолубБозор{% endblock %}
+
+{% block content %}
+<!-- Seller Profile Header -->
+<div class="bg-[#1E1E1E] rounded-lg p-8 border border-gray-800 mb-8">
+    <div class="flex items-center gap-6">
+        <div class="w-24 h-24 bg-[#D4AF37] rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+        </div>
+        <div>
+            <h1 class="text-4xl font-bold gold-text mb-2">{{ seller.username }}</h1>
+            <p class="text-gray-400">На сайте с {{ seller.date_joined|date:"F Y" }}</p>
+            <p class="text-gray-500 mt-2">
+                Активных объявлений: <span class="text-[#D4AF37] font-semibold">{{ pigeon_count }}</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Seller's Listings -->
+<div class="mb-6">
+    <h2 class="text-3xl font-bold mb-6">Объявления продавца</h2>
+</div>
+
+{% if pigeons %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for pigeon in pigeons %}
+    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if pigeon.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
+        <!-- VIP Badge -->
+        {% if pigeon.is_vip %}
+        <div class="bg-[#D4AF37] text-black text-center py-1 font-semibold text-sm">
+            ⭐ VIP ⭐
+        </div>
+        {% endif %}
+        
+        <!-- Image -->
+        <a href="{% url 'pigeon_detail' pigeon.pk %}">
+            <div class="relative">
+                <img 
+                    src="{{ pigeon.image.url }}" 
+                    alt="{{ pigeon.title }}"
+                    class="w-full h-64 object-cover"
+                >
+                <!-- Breed & Sex Badge -->
+                <div class="absolute top-2 left-2 flex gap-2">
+                    <span class="bg-black/70 text-[#D4AF37] px-2 py-1 rounded text-xs font-semibold">
+                        {{ pigeon.get_breed_display }}
+                    </span>
+                    <span class="bg-black/70 text-gray-300 px-2 py-1 rounded text-xs">
+                        {{ pigeon.get_sex_display }}
+                    </span>
+                </div>
+            </div>
+        </a>
+        
+        <!-- Content -->
+        <div class="p-5">
+            <a href="{% url 'pigeon_detail' pigeon.pk %}">
+                <h3 class="text-xl font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">
+                    {{ pigeon.title }}
+                </h3>
+            </a>
+            
+            <p class="text-sm text-gray-500 mb-2">
+                {{ pigeon.get_game_type_display }}
+            </p>
+            
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                {{ pigeon.description|truncatewords:15 }}
+            </p>
+            
+            <!-- Price -->
+            <div class="mb-4">
+                <span class="text-3xl font-bold gold-text">{{ pigeon.price }}</span>
+                <span class="text-gray-400 ml-1">TJS</span>
+            </div>
+            
+            <!-- Date -->
+            <div class="text-sm text-gray-500 border-t border-gray-700 pt-3 mb-4">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ pigeon.created_at|date:"d.m.Y" }}
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <a href="{% url 'pigeon_detail' pigeon.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+                Подробнее →
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+    <div class="text-6xl mb-4">🕊️</div>
+    <h2 class="text-2xl font-bold text-gray-400 mb-2">Нет активных объявлений</h2>
+    <p class="text-gray-500">У этого продавца пока нет одобренных объявлений</p>
+</div>
+{% endif %}
+
+<!-- Back Button -->
+<div class="mt-8">
+    <a href="{% url 'home' %}" class="inline-flex items-center text-[#D4AF37] hover:text-[#C5A028] transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Вернуться к списку
+    </a>
+</div>
+{% endblock %}

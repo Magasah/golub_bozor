@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход - ГолубБозор{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold gold-text mb-2">Вход</h1>
+        <p class="text-gray-400">Войдите в свой аккаунт</p>
+    </div>
+    
+    <div class="bg-[#1E1E1E] rounded-lg p-8 border border-gray-800">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Username -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Имя пользователя
+                </label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    id="{{ form.username.id_for_label }}"
+                    class="w-full px-4 py-3 bg-[#121212] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none"
+                    placeholder="Имя пользователя"
+                    required
+                >
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Password -->
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Пароль
+                </label>
+                <input 
+                    type="password" 
+                    name="password" 
+                    id="{{ form.password.id_for_label }}"
+                    class="w-full px-4 py-3 bg-[#121212] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none"
+                    placeholder="Пароль"
+                    required
+                >
+                {% if form.password.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="p-4 bg-red-900 border border-red-700 rounded-lg">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Submit Button -->
+            <button type="submit" class="w-full px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                Войти
+            </button>
+        </form>
+        
+        <!-- Register Link -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-400">
+                Нет аккаунта? 
+                <a href="{% url 'register' %}" class="text-[#D4AF37] hover:underline font-semibold">Зарегистрироваться</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои объявления - ГолубБозор{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <h1 class="text-4xl font-bold gold-text">Мои объявления</h1>
+    <a href="{% url 'add_pigeon' %}" class="px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+        + Добавить новое
+    </a>
+</div>
+
+{% if pigeons %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for pigeon in pigeons %}
+    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden {% if pigeon.is_vip %}border-4 border-[#D4AF37]{% else %}border border-gray-800{% endif %}">
+        <!-- VIP Badge -->
+        {% if pigeon.is_vip %}
+        <div class="bg-[#D4AF37] text-black text-center py-1 font-semibold text-sm">
+            ⭐ VIP ⭐
+        </div>
+        {% endif %}
+        
+        <!-- Image with Approval Status Badge -->
+        <div class="relative">
+            <a href="{% url 'pigeon_detail' pigeon.pk %}">
+                <img 
+                    src="{{ pigeon.image.url }}" 
+                    alt="{{ pigeon.title }}"
+                    class="w-full h-64 object-cover"
+                >
+            </a>
+            
+            <!-- Approval Status Badge -->
+            <div class="absolute top-2 right-2">
+                {% if pigeon.is_approved %}
+                <span class="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Одобрено
+                </span>
+                {% else %}
+                <span class="bg-yellow-600 text-black px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    На модерации
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Breed & Sex Badge -->
+            <div class="absolute top-2 left-2 flex gap-2">
+                <span class="bg-black/70 text-[#D4AF37] px-2 py-1 rounded text-xs font-semibold">
+                    {{ pigeon.get_breed_display }}
+                </span>
+                <span class="bg-black/70 text-gray-300 px-2 py-1 rounded text-xs">
+                    {{ pigeon.get_sex_display }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="p-5">
+            <h3 class="text-xl font-bold mb-2 line-clamp-1">{{ pigeon.title }}</h3>
+            
+            <!-- Game Type -->
+            <p class="text-sm text-gray-500 mb-2">
+                {{ pigeon.get_game_type_display }}
+            </p>
+            
+            <!-- Price -->
+            <p class="text-3xl font-bold gold-text mb-2">{{ pigeon.price }} <span class="text-sm">TJS</span></p>
+            
+            <!-- Date & Status Info -->
+            <div class="text-sm text-gray-500 mb-4 space-y-1">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ pigeon.created_at|date:"d.m.Y H:i" }}
+                </div>
+                {% if not pigeon.is_approved %}
+                <div class="text-yellow-400 text-xs">
+                    Ожидает проверки модератором
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-2">
+                <a href="{% url 'edit_pigeon' pigeon.pk %}" class="text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+                    Изменить
+                </a>
+                <a href="{% url 'delete_pigeon' pigeon.pk %}" class="text-center px-4 py-2 border-2 border-red-600 text-red-600 font-semibold rounded-lg hover:bg-red-600 hover:text-white transition">
+                    Удалить
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+    <div class="text-6xl mb-4">🕊️</div>
+    <h2 class="text-2xl font-bold text-gray-400 mb-2">У вас пока нет объявлений</h2>
+    <p class="text-gray-500 mb-6">Создайте свое первое объявление</p>
+    <a href="{% url 'add_pigeon' %}" class="inline-block px-6 py-3 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
+        Добавить объявление
+    </a>
+</div>
+{% endif %}
+{% endblock %}
