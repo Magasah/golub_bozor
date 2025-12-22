@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'axes',  # Django Axes for brute force protection
-    'core',  # Our main app
+    'core.apps.CoreConfig',  # Our main app
 ]
 
 MIDDLEWARE = [
