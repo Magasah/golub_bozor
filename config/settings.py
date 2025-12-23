@@ -22,7 +22,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.125.11', '10.134.72.123', '.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.125.11', '10.134.72.123', '.onrender.com', '.pythonanywhere.com', 'magaj.pythonanywhere.com']
 
 # Для PythonAnywhere добавляем домен
 if ON_PYTHONANYWHERE:
