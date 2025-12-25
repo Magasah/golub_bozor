@@ -9,6 +9,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{% block title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}</title>
     
+    <!-- 🔗 Open Graph Meta Tags for WhatsApp/Telegram/Social Previews -->
+    <meta property="og:site_name" content="ГолубБозор">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Лучшие породистые голуби Таджикистана. VIP объявления, аукционы, проверенные продавцы.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'img/icon-512.png' %}{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    
+    <!-- Twitter Card (optional but good for all platforms) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Лучшие породистые голуби Таджикистана{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/icon-512.png' %}{% endblock %}">
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
     
@@ -149,9 +163,21 @@
                     <a href="{% url 'my_pigeons' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">📋</span> Мои объявления
                     </a>
+                    <a href="{% url 'favorites' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
+                        <span class="text-xl mr-2">❤️</span> Избранное
+                    </a>
+                    <a href="{% url 'user_settings' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
+                        <span class="text-xl mr-2">⚙️</span> Настройки
+                    </a>
                     <a href="{% url 'vip_request' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">⭐</span> VIP размещение
                     </a>
+                    
+                    {% if user.is_staff %}
+                    <a href="{% url 'manager_dashboard' %}" class="block px-4 py-3 rounded-lg bg-red-900/30 border border-red-700 text-red-400 hover:bg-red-900/50 transition">
+                        <span class="text-xl mr-2">🛡️</span> Manager Dashboard
+                    </a>
+                    {% endif %}
                     
                     <div class="border-t border-gray-700 my-4"></div>
                     
@@ -221,8 +247,19 @@
                         <a href="{% url 'add_pigeon' %}" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
                             + Добавить
                         </a>
+                        <a href="{% url 'favorites' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="Избранное">
+                            ❤️
+                        </a>
                         <a href="{% url 'my_pigeons' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
                             Мои объявления
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'manager_dashboard' %}" class="px-3 py-2 bg-red-900/30 border border-red-700 text-red-400 rounded-lg hover:bg-red-900/50 transition font-semibold" title="Manager Dashboard">
+                            🛡️ Dashboard
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'user_settings' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="Настройки">
+                            ⚙️
                         </a>
                         <span class="text-gray-400">{{ user.username }}</span>
                         <form method="post" action="{% url 'logout' %}" class="inline">

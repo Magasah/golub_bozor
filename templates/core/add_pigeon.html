@@ -16,6 +16,79 @@
         <form method="post" enctype="multipart/form-data" class="space-y-6">
             {% csrf_token %}
             
+            <!-- Listing Type (Radio Buttons) -->
+            <div class="border-2 border-[#D4AF37] rounded-lg p-5 bg-[#121212]">
+                <label class="block text-lg font-bold text-[#D4AF37] mb-4">
+                    📋 Тип размещения *
+                </label>
+                <div class="space-y-3">
+                    {% for choice_value, choice_label in form.listing_type.field.choices %}
+                    <label class="flex items-center p-4 bg-[#1E1E1E] rounded-lg border-2 border-gray-700 hover:border-[#D4AF37] cursor-pointer transition group">
+                        <input type="radio" name="listing_type" value="{{ choice_value }}" 
+                               class="w-5 h-5 text-[#D4AF37] bg-[#121212] border-gray-600 focus:ring-[#D4AF37] focus:ring-2"
+                               {% if form.listing_type.value == choice_value or choice_value == 'fixed' and not form.listing_type.value %}checked{% endif %}
+                               onchange="toggleAuctionFields()">
+                        <span class="ml-3 text-base font-medium text-gray-200 group-hover:text-[#D4AF37]">
+                            {{ choice_label }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.listing_type.errors %}
+                    <p class="text-red-500 text-sm mt-2">{{ form.listing_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Auction Fee Warning (Hidden by default) -->
+            <div id="auctionWarning" class="hidden border-2 border-red-600 bg-red-900/20 rounded-lg p-5">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <p class="text-lg font-bold text-[#D4AF37] mb-1">⚠️ Внимание!</p>
+                        <p class="text-base text-red-400 font-semibold">
+                            Стоимость размещения аукциона: <span class="text-2xl text-[#D4AF37]">3 сомони</span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-2">
+                            После проверки чека администратором ваш аукцион будет активирован.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Instructions Box (Hidden by default) -->
+            <div id="paymentBox" class="hidden border-2 border-[#D4AF37] bg-gradient-to-br from-[#1E1E1E] to-[#121212] rounded-lg p-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-[#D4AF37] mb-3">💳 Оплата размещения аукциона</h3>
+                    <p class="text-gray-300 mb-4">Для активации аукциона переведите <span class="text-[#D4AF37] font-bold text-xl">3 сомони</span> на кошелек:</p>
+                    
+                    <div class="bg-[#121212] border-2 border-[#D4AF37] rounded-lg p-5 mb-4 inline-block">
+                        <p class="text-sm text-gray-400 mb-2">Alif / DC Money:</p>
+                        <div class="flex items-center justify-center gap-3">
+                            <p id="phoneNumber" class="text-3xl md:text-4xl font-bold text-[#D4AF37] tracking-wider">+992 888 788 181</p>
+                            <button type="button" onclick="copyPhoneNumber()" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
+                                📋 Копировать
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Receipt Upload -->
+                <div>
+                    <label for="{{ form.payment_receipt.id_for_label }}" class="block text-base font-bold text-[#D4AF37] mb-3 text-center">
+                        📸 Загрузите скриншот чека оплаты *
+                    </label>
+                    {{ form.payment_receipt }}
+                    {% if form.payment_receipt.errors %}
+                        <p class="text-red-500 text-sm mt-2 text-center">{{ form.payment_receipt.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-2 text-center">
+                        Сделайте скриншот подтверждения перевода и загрузите его
+                    </p>
+                </div>
+            </div>
+            
             <!-- Title -->
             <div>
                 <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
@@ -74,15 +147,44 @@
                 </div>
             </div>
             
-            <!-- Price -->
-            <div>
+            <!-- Price (for Fixed listings) -->
+            <div id="fixedPriceField">
                 <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Цена (TJS) *
+                    💰 Цена (TJS) *
                 </label>
                 {{ form.price }}
                 {% if form.price.errors %}
                     <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
                 {% endif %}
+            </div>
+            
+            <!-- Auction Fields (Hidden by default) -->
+            <div id="auctionFields" class="hidden space-y-4 border-2 border-[#D4AF37] rounded-lg p-5 bg-[#121212]">
+                <h3 class="text-lg font-bold text-[#D4AF37] mb-3">🔨 Настройки аукциона</h3>
+                
+                <!-- Start Price -->
+                <div>
+                    <label for="{{ form.start_price.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                        Начальная цена (TJS) *
+                    </label>
+                    {{ form.start_price }}
+                    {% if form.start_price.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.start_price.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">С этой суммы начнутся торги</p>
+                </div>
+                
+                <!-- Auction End Date -->
+                <div>
+                    <label for="{{ form.auction_end_date.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                        Дата и время окончания аукциона *
+                    </label>
+                    {{ form.auction_end_date }}
+                    {% if form.auction_end_date.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.auction_end_date.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Выберите когда закончится аукцион</p>
+                </div>
             </div>
             
             <!-- Description -->
@@ -96,21 +198,43 @@
                 {% endif %}
             </div>
             
-            <!-- Image -->
+            <!-- Main Cover Image -->
             <div>
                 <label for="{{ form.image.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Фото *
+                    📸 Главное фото (Обложка) *
                 </label>
-                {% if pigeon and pigeon.image %}
-                    <div class="mb-3">
-                        <img src="{{ pigeon.image.url }}" alt="Current" class="w-32 h-32 object-cover rounded border-2 border-gray-700">
-                        <p class="text-sm text-gray-400 mt-1">Текущее фото</p>
-                    </div>
-                {% endif %}
                 {{ form.image }}
                 {% if form.image.errors %}
                     <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
                 {% endif %}
+                <p class="text-xs text-gray-500 mt-2">
+                    • Это фото будет отображаться в списке<br>
+                    • Рекомендуемый размер: 1200x800px
+                </p>
+            </div>
+            
+            <!-- Multiple Extra Images Upload (Gallery) -->
+            <div>
+                <label for="{{ form.extra_images.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    🖼️ Дополнительные фото (Галерея - до 5 фото)
+                </label>
+                {% if pigeon and pigeon.images.all %}
+                    <div class="mb-3 grid grid-cols-3 gap-2">
+                        {% for img in pigeon.images.all %}
+                        <img src="{{ img.image.url }}" alt="Image {{ forloop.counter }}" class="w-full h-24 object-cover rounded border-2 border-gray-700">
+                        {% endfor %}
+                    </div>
+                    <p class="text-sm text-gray-400 mb-2">Текущие изображения (можно заменить)</p>
+                {% endif %}
+                {{ form.extra_images }}
+                {% if form.extra_images.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.extra_images.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-2">
+                    • Необязательно: выберите до 5 дополнительных изображений<br>
+                    • Эти фото будут в галерее на странице объявления
+                </p>
+                <div id="imagePreview" class="mt-3 grid grid-cols-3 gap-2 hidden"></div>
             </div>
             
             <!-- Contact Information Section -->
@@ -208,8 +332,8 @@
             
             <!-- Buttons -->
             <div class="flex flex-col sm:flex-row gap-3 pt-4">
-                <button type="submit" class="flex-1 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
-                    {% if pigeon %}💾 Сохранить изменения{% else %}📤 Опубликовать{% endif %}
+                <button type="submit" id="submitButton" class="flex-1 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    {% if pigeon %}💾 Сохранить изменения{% else %}� Опубликовать лот{% endif %}
                 </button>
                 <a href="{% if pigeon %}{% url 'pigeon_detail' pigeon.pk %}{% else %}{% url 'home' %}{% endif %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
                     Отмена
@@ -218,4 +342,158 @@
         </form>
     </div>
 </div>
+
+<!-- 💫 Loading Spinner Overlay (Dark Luxury) -->
+<div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+    <div class="text-center">
+        <!-- Animated Pigeon Icon -->
+        <div class="mb-6 animate-bounce">
+            <div class="text-8xl">🦅</div>
+        </div>
+        
+        <!-- Loading Text -->
+        <h2 class="text-3xl font-bold text-[#D4AF37] mb-3">
+            Загрузка...
+        </h2>
+        <p class="text-gray-300 text-lg">
+            Пожалуйста, подождите
+        </p>
+        
+        <!-- Spinner Animation -->
+        <div class="mt-6 flex justify-center">
+            <div class="w-16 h-16 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        
+        <!-- Progress Hint -->
+        <p class="text-sm text-gray-500 mt-4">
+            Загружаются изображения...
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleAuctionFields() {
+    const listingTypeInputs = document.querySelectorAll('input[name="listing_type"]');
+    let selectedType = 'fixed';
+    
+    listingTypeInputs.forEach(input => {
+        if (input.checked) {
+            selectedType = input.value;
+        }
+    });
+    
+    const auctionWarning = document.getElementById('auctionWarning');
+    const paymentBox = document.getElementById('paymentBox');
+    const auctionFields = document.getElementById('auctionFields');
+    const fixedPriceField = document.getElementById('fixedPriceField');
+    
+    if (selectedType === 'auction') {
+        // Show auction elements
+        auctionWarning.classList.remove('hidden');
+        paymentBox.classList.remove('hidden');
+        auctionFields.classList.remove('hidden');
+        fixedPriceField.classList.add('hidden');
+    } else {
+        // Show fixed price elements
+        auctionWarning.classList.add('hidden');
+        paymentBox.classList.add('hidden');
+        auctionFields.classList.add('hidden');
+        fixedPriceField.classList.remove('hidden');
+    }
+}
+
+function copyPhoneNumber() {
+    const phoneNumber = '+992888788181';
+    navigator.clipboard.writeText(phoneNumber).then(function() {
+        // Show success feedback
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '✅ Скопировано!';
+        button.classList.add('bg-green-600');
+        button.classList.remove('bg-[#D4AF37]');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('bg-green-600');
+            button.classList.add('bg-[#D4AF37]');
+        }, 2000);
+    }, function(err) {
+        alert('Не удалось скопировать. Пожалуйста, скопируйте вручную: +992 888 788 181');
+    });
+}
+
+// 📷 Image Preview Handler
+function handleImagePreview() {
+    const imageInput = document.querySelector('input[name="extra_images"]');
+    const previewContainer = document.getElementById('imagePreview');
+    
+    if (!imageInput) return;
+    
+    imageInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        previewContainer.innerHTML = '';
+        
+        if (files.length > 5) {
+            alert('⚠️ Можно загрузить максимум 5 изображений!');
+            imageInput.value = '';
+            previewContainer.classList.add('hidden');
+            return;
+        }
+        
+        if (files.length > 0) {
+            previewContainer.classList.remove('hidden');
+            
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded border-2 border-[#D4AF37]" alt="Preview ${index + 1}">
+                        <span class="absolute top-1 left-1 bg-[#D4AF37] text-black text-xs font-bold px-2 py-1 rounded">${index + 1}</span>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    });
+}
+
+// 💫 Loading Spinner Handler
+function setupLoadingSpinner() {
+    const form = document.querySelector('form');
+    const submitButton = document.getElementById('submitButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    if (!form || !submitButton || !loadingOverlay) return;
+    
+    form.addEventListener('submit', function(e) {
+        // Validate extra images count (optional gallery photos)
+        const imageInput = document.querySelector('input[name="extra_images"]');
+        
+        if (imageInput && imageInput.files.length > 5) {
+            e.preventDefault();
+            alert('⚠️ Можно загрузить максимум 5 дополнительных изображений!');
+            return;
+        }
+        
+        // Show loading overlay
+        loadingOverlay.classList.remove('hidden');
+        
+        // Disable submit button
+        submitButton.disabled = true;
+        submitButton.textContent = '⚙️ Отправка...';
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleAuctionFields();
+    handleImagePreview();
+    setupLoadingSpinner();
+});
+</script>
 {% endblock %}

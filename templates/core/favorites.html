@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Избранное - ГолубБозор{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-4xl font-bold mb-2">❤️ Мое Избранное</h1>
+            <p class="text-gray-400">Объявления, которые вам понравились</p>
+        </div>
+        <div class="text-right">
+            <p class="text-2xl font-bold gold-text">{{ favorites_count }}</p>
+            <p class="text-sm text-gray-500">в избранном</p>
+        </div>
+    </div>
+</div>
+
+{% if favorite_pigeons %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for pigeon in favorite_pigeons %}
+    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if pigeon.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
+        <!-- VIP Badge -->
+        {% if pigeon.is_vip %}
+        <div class="bg-[#D4AF37] text-black text-center py-1 font-semibold text-sm">
+            ⭐ VIP ⭐
+        </div>
+        {% endif %}
+        
+        <!-- Image -->
+        <a href="{% url 'pigeon_detail' pigeon.pk %}">
+            <div class="relative">
+                <img 
+                    src="{{ pigeon.image.url }}" 
+                    alt="{{ pigeon.title }}"
+                    class="w-full h-64 object-cover"
+                >
+                <!-- Favorite Badge -->
+                <div class="absolute top-2 right-2">
+                    <button 
+                        onclick="toggleFavorite(event, {{ pigeon.pk }})" 
+                        class="favorite-btn bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-black/90 transition"
+                        data-pigeon-id="{{ pigeon.pk }}"
+                    >
+                        <span class="text-2xl">❤️</span>
+                    </button>
+                </div>
+                
+                <!-- Breed & Sex Badge -->
+                <div class="absolute top-2 left-2 flex gap-2">
+                    <span class="bg-black/70 text-[#D4AF37] px-2 py-1 rounded text-xs font-semibold">
+                        {{ pigeon.get_breed_display }}
+                    </span>
+                    <span class="bg-black/70 text-gray-300 px-2 py-1 rounded text-xs">
+                        {{ pigeon.get_sex_display }}
+                    </span>
+                </div>
+            </div>
+        </a>
+        
+        <!-- Content -->
+        <div class="p-5">
+            <a href="{% url 'pigeon_detail' pigeon.pk %}">
+                <h3 class="text-xl font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">
+                    {{ pigeon.title }}
+                </h3>
+            </a>
+            
+            <p class="text-sm text-gray-500 mb-2">
+                {{ pigeon.get_game_type_display }}
+            </p>
+            
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                {{ pigeon.description|truncatewords:15 }}
+            </p>
+            
+            <!-- Price -->
+            <div class="mb-4">
+                {% if pigeon.listing_type == 'auction' %}
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-sm text-gray-400">Текущая ставка:</span>
+                </div>
+                <span class="text-3xl font-bold gold-text">{{ pigeon.current_price|default:pigeon.start_price }}</span>
+                {% else %}
+                <span class="text-3xl font-bold gold-text">{{ pigeon.price }}</span>
+                {% endif %}
+                <span class="text-gray-400 ml-1">TJS</span>
+            </div>
+            
+            <!-- Location & Date -->
+            <div class="text-sm text-gray-500 border-t border-gray-700 pt-3 mb-4">
+                <div class="flex items-center mb-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {{ pigeon.city|default:"Не указан" }}
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ pigeon.created_at|date:"d.m.Y" }}
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <a href="{% url 'pigeon_detail' pigeon.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+                Подробнее →
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-20 bg-[#1E1E1E] rounded-lg border border-gray-800">
+    <div class="text-8xl mb-6">💔</div>
+    <h2 class="text-3xl font-bold mb-4">У вас пока нет избранных объявлений</h2>
+    <p class="text-gray-400 mb-8 text-lg">
+        Нажимайте на ❤️ на понравившихся объявлениях,<br>
+        и они появятся здесь для быстрого доступа
+    </p>
+    <a href="{% url 'home' %}" class="inline-block px-8 py-4 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition text-lg">
+        🦅 Смотреть объявления
+    </a>
+</div>
+{% endif %}
+
+<!-- JavaScript для кнопки избранного -->
+<script>
+function toggleFavorite(event, pigeonId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const btn = event.currentTarget;
+    
+    fetch(`/pigeon/${pigeonId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'removed') {
+            // Удаляем карточку со страницы с анимацией
+            const card = btn.closest('.grid > div');
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                card.remove();
+                // Проверяем, остались ли объявления
+                const grid = document.querySelector('.grid');
+                if (grid && grid.children.length === 0) {
+                    location.reload(); // Перезагружаем для показа пустого состояния
+                }
+            }, 300);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при удалении из избранного');
+    });
+}
+</script>
+{% endblock %}

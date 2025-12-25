@@ -2,6 +2,19 @@
 
 {% block title %}{{ pigeon.title }} - ГолубБозор{% endblock %}
 
+<!-- 🔗 Pigeon-specific Open Graph tags for rich social previews -->
+{% block og_title %}{{ pigeon.title }} — {% if pigeon.listing_type == 'auction' %}{{ pigeon.current_price }}{% else %}{{ pigeon.price }}{% endif %} TJS | ГолубБозор{% endblock %}
+
+{% block og_description %}Продается голубь в {{ pigeon.location }}. Порода: {{ pigeon.get_breed_display }}. {% if pigeon.listing_type == 'auction' %}Аукцион{% else %}Прямая продажа{% endif %}. Заходи на GolubBozor!{% endblock %}
+
+{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{{ pigeon.image.url }}{% endblock %}
+
+{% block twitter_title %}{{ pigeon.title }} — {% if pigeon.listing_type == 'auction' %}{{ pigeon.current_price }}{% else %}{{ pigeon.price }}{% endif %} TJS{% endblock %}
+
+{% block twitter_description %}{{ pigeon.get_breed_display }} • {{ pigeon.location }} • {% if pigeon.listing_type == 'auction' %}Аукцион{% else %}Продажа{% endif %}{% endblock %}
+
+{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{{ pigeon.image.url }}{% endblock %}
+
 {% block content %}
 <!-- Breadcrumb -->
 <div class="mb-6 flex flex-wrap items-center justify-between">
@@ -42,42 +55,51 @@
             </a>
         </div>
         
-        <!-- Action Buttons (Favorite & Share) -->
+        <!-- Action Buttons (Favorite & WhatsApp Share) -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <!-- Favorite Button -->
+            {% if user.is_authenticated %}
             <button 
                 onclick="toggleFavorite({{ pigeon.pk }}, this)"
                 class="flex items-center justify-center px-4 py-3 border-2 rounded-lg font-semibold transition
                 {% if is_favorited %}
-                    border-red-500 text-red-500 bg-red-500/10
+                    border-red-500 text-red-500 bg-red-500/10 hover:bg-red-500/20
                 {% else %}
-                    border-gray-700 text-gray-300 hover:border-[#D4AF37] hover:text-[#D4AF37]
+                    border-gray-700 text-gray-300 hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#D4AF37]/10
                 {% endif %}"
+                id="favorite-btn"
             >
-                <span class="heart-icon">
+                <span class="heart-icon flex">
                     {% if is_favorited %}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
-                    </svg>
+                    ❤️
                     {% else %}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
+                    🤍
                     {% endif %}
                 </span>
-                <span class="favorite-text">{% if is_favorited %}В избранном{% else %}В избранное{% endif %}</span>
+                <span class="favorite-text ml-2">{% if is_favorited %}В избранном{% else %}В избранное{% endif %}</span>
             </button>
-            
-            <!-- Share Button -->
-            <button 
-                onclick="shareProduct('{{ pigeon.title }}', window.location.href)"
-                class="flex items-center justify-center px-4 py-3 border-2 border-gray-700 text-gray-300 rounded-lg font-semibold hover:border-[#D4AF37] hover:text-[#D4AF37] transition"
+            {% else %}
+            <a 
+                href="{% url 'login' %}?next={{ request.path }}"
+                class="flex items-center justify-center px-4 py-3 border-2 border-gray-700 text-gray-300 rounded-lg font-semibold hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 transition"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                <span class="flex">🤍</span>
+                <span class="ml-2">В избранное</span>
+            </a>
+            {% endif %}
+            
+            <!-- WhatsApp Share Button -->
+            <a 
+                href="https://wa.me/?text=Салам!%20Зацени%20этого%20голубя:%20{{ pigeon.title|urlencode }}%20за%20{% if pigeon.listing_type == 'auction' %}{{ pigeon.current_price }}{% else %}{{ pigeon.price }}{% endif %}%20TJS.%20Ссылка:%20{{ request.build_absolute_uri }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition shadow-lg hover:shadow-xl"
+            >
+                <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                 </svg>
-                Поделиться
-            </button>
+                Поделиться в WhatsApp
+            </a>
         </div>
         
         <!-- Pigeon Details Grid -->
@@ -103,18 +125,44 @@
             </div>
         </div>
         
-        <!-- Video Section -->
+        <!-- Video Section with Smart Button -->
         {% if pigeon.video_url %}
         <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 mb-6">
             <h2 class="text-2xl font-bold mb-4 gold-text">🎥 Видео</h2>
-            <div class="aspect-w-16 aspect-h-9">
-                <iframe 
-                    src="{{ pigeon.get_youtube_embed_url }}" 
-                    class="w-full h-64 md:h-96 rounded-lg"
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen
-                ></iframe>
+            <p class="text-gray-400 mb-4 text-sm">Доступна видео-презентация этого голубя</p>
+            
+            <!-- Smart Video Button (Dark Luxury Style) -->
+            <a 
+                href="{{ pigeon.video_url }}" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="group relative flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-[1.02] overflow-hidden"
+            >
+                <!-- Animated background shine effect -->
+                <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                
+                <!-- Button content -->
+                <svg class="h-6 w-6 mr-3 relative z-10" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span class="relative z-10">🎥 Смотреть Видео</span>
+                <svg class="h-5 w-5 ml-2 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+            </a>
+            
+            <!-- Video platform hint -->
+            <div class="mt-3 text-center text-xs text-gray-500">
+                {% if 'youtube' in pigeon.video_url or 'youtu.be' in pigeon.video_url %}
+                    <span class="inline-flex items-center">
+                        <svg class="h-4 w-4 mr-1 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        YouTube
+                    </span>
+                {% else %}
+                    <span>Внешняя ссылка</span>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -129,12 +177,194 @@
     <!-- Right Column - Price & Contact -->
     <div class="lg:col-span-1">
         <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 sticky top-20">
-            <!-- Price -->
-            <div class="mb-6 pb-6 border-b border-gray-700">
-                <p class="text-gray-500 text-sm mb-2">Цена</p>
-                <p class="text-4xl md:text-5xl font-bold gold-text">{{ pigeon.price }}</p>
-                <p class="text-gray-400 text-lg mt-1">TJS</p>
-            </div>
+            
+            {% if pigeon.listing_type == 'auction' %}
+                <!-- ==================== AUCTION MODE ==================== -->
+                <div class="mb-6 pb-6 border-b border-[#D4AF37]">
+                    <!-- Auction Badge -->
+                    <div class="bg-gradient-to-r from-[#D4AF37] to-[#F4BF47] text-black text-center py-3 rounded-lg mb-6 font-bold text-lg shadow-lg animate-pulse">
+                        🔨 ЖИВОЙ АУКЦИОН 🔨
+                    </div>
+                    
+                    <!-- Current Highest Bid -->
+                    <div class="text-center mb-6">
+                        <p class="text-gray-400 text-sm uppercase tracking-wider mb-2">Текущая Ставка</p>
+                        <p class="text-5xl md:text-6xl font-black gold-text leading-none" style="text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);">
+                            {{ pigeon.current_price|default:pigeon.start_price }}
+                        </p>
+                        <p class="text-[#D4AF37] text-2xl font-bold mt-2">TJS</p>
+                    </div>
+                    
+                    <!-- Countdown Timer -->
+                    <div class="bg-[#121212] rounded-lg p-4 mb-6 border border-[#D4AF37]">
+                        <p class="text-gray-400 text-xs uppercase text-center mb-3">Окончание через:</p>
+                        <div id="countdown-timer" class="grid grid-cols-4 gap-2 text-center" data-end="{{ pigeon.auction_end_date|date:'c' }}">
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="days">00</div>
+                                <div class="text-xs text-gray-500 mt-1">ДНЕЙ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="hours">00</div>
+                                <div class="text-xs text-gray-500 mt-1">ЧАСОВ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="minutes">00</div>
+                                <div class="text-xs text-gray-500 mt-1">МИНУТ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="seconds">00</div>
+                                <div class="text-xs text-gray-500 mt-1">СЕКУНД</div>
+                            </div>
+                        </div>
+                        <div id="auction-status" class="text-center mt-3 hidden">
+                            <span class="text-red-500 font-bold text-lg">⏰ АУКЦИОН ЗАВЕРШЁН</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Auction Info Grid -->
+                    <div class="space-y-2 text-sm mb-6">
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Начальная цена:</span>
+                            <span class="text-gray-200 font-semibold">{{ pigeon.start_price }} TJS</span>
+                        </div>
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Всего ставок:</span>
+                            <span class="text-[#D4AF37] font-bold">{{ pigeon.get_bid_count }}</span>
+                        </div>
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Статус:</span>
+                            {% if pigeon.is_auction_active %}
+                                <span class="text-green-500 font-semibold flex items-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                    Активен
+                                </span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">Завершён</span>
+                            {% endif %}
+                        </div>
+                        {% if pigeon.winner and not pigeon.is_auction_active %}
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">🏆 Победитель:</span>
+                            <span class="text-[#D4AF37] font-bold">{{ pigeon.winner.username }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- BID FORM - Only show if user is authenticated, not owner, and auction is active -->
+                    {% if user.is_authenticated and pigeon.is_auction_active and user != pigeon.owner %}
+                    <div id="bid-form-container" class="p-5 bg-gradient-to-br from-[#121212] to-[#1A1A1A] rounded-xl border-2 border-[#D4AF37] shadow-xl">
+                        <h4 class="text-xl font-bold mb-4 text-[#D4AF37] flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                            </svg>
+                            Сделать ставку
+                        </h4>
+                        <form method="post" action="{% url 'place_bid' pigeon.pk %}" id="bid-form">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="block text-gray-300 text-sm font-semibold mb-2">
+                                    Ваша ставка (TJS)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    name="amount" 
+                                    step="0.01" 
+                                    min="{{ pigeon.current_price|default:pigeon.start_price|add:1 }}"
+                                    class="w-full px-4 py-3 bg-[#0A0A0A] border-2 border-[#D4AF37] rounded-lg text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent"
+                                    placeholder="Введите сумму"
+                                    required
+                                >
+                                {% if bid_form.amount.help_text %}
+                                <p class="text-gray-400 text-xs mt-2 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ bid_form.amount.help_text }}
+                                </p>
+                                {% endif %}
+                                {% if bid_form.amount.errors %}
+                                <p class="text-red-400 text-sm mt-2">{{ bid_form.amount.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <button 
+                                type="submit" 
+                                id="bid-submit-btn"
+                                class="w-full px-6 py-4 bg-gradient-to-r from-[#D4AF37] to-[#F4BF47] text-black font-black text-lg rounded-lg hover:from-[#C5A028] hover:to-[#E5B038] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
+                            >
+                                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                СДЕЛАТЬ СТАВКУ
+                            </button>
+                        </form>
+                    </div>
+                    {% elif not user.is_authenticated and pigeon.is_auction_active %}
+                    <!-- Not logged in -->
+                    <div class="p-6 bg-[#121212] rounded-xl border-2 border-gray-700 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-gray-400 mb-4 text-lg">Войдите, чтобы делать ставки</p>
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="inline-block px-8 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition transform hover:scale-105">
+                            Войти
+                        </a>
+                    </div>
+                    {% elif user == pigeon.owner and pigeon.is_auction_active %}
+                    <!-- Owner can't bid -->
+                    <div class="p-6 bg-[#121212] rounded-xl border-2 border-gray-700 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-gray-400 text-lg">Вы не можете делать ставки на свой аукцион</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- BID HISTORY -->
+                {% if bids %}
+                <div class="mb-6 pb-6 border-b border-gray-700">
+                    <h3 class="text-xl font-bold mb-4 text-gray-200 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-[#D4AF37]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        История ставок ({{ bids|length }})
+                    </h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                        {% for bid in bids %}
+                        <div class="flex justify-between items-center p-3 bg-[#121212] rounded-lg border border-gray-800 hover:border-[#D4AF37] transition">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#C5A028] rounded-full flex items-center justify-center text-black font-bold mr-3">
+                                    {{ bid.user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <p class="text-gray-200 font-semibold">{{ bid.user.username }}</p>
+                                    <p class="text-gray-500 text-xs">{{ bid.created_at|timesince }} назад</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[#D4AF37] font-black text-xl">{{ bid.amount }}</p>
+                                <p class="text-gray-400 text-xs">TJS</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <!-- ==================== FIXED PRICE MODE ==================== -->
+                <!-- FIXED PRICE MODE -->
+                <div class="mb-6 pb-6 border-b border-gray-700">
+                    <div class="bg-blue-600 text-white text-center py-2 rounded-lg mb-4 font-bold">
+                        💰 ФИКСИРОВАННАЯ ЦЕНА
+                    </div>
+                    <p class="text-gray-500 text-sm mb-2">Цена</p>
+                    <p class="text-4xl md:text-5xl font-bold gold-text">{{ pigeon.price }}</p>
+                    <p class="text-gray-400 text-lg mt-1">TJS</p>
+                </div>
+            {% endif %}
             
             <!-- Seller Info -->
             <div class="mb-6 pb-6 border-b border-gray-700">
@@ -213,4 +443,242 @@
         Вернуться к списку
     </a>
 </div>
+
+<!-- Auction Countdown Script -->
+<!-- Auction Countdown Timer Script -->
+<style>
+/* Custom scrollbar for bid history */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #121212;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #C5A028;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
+
+<script>
+// Toggle Favorite Function
+function toggleFavorite(pigeonId, button) {
+    fetch(`/pigeon/${pigeonId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.is_favorited) {
+            // Update to favorited state
+            button.classList.remove('border-gray-700', 'text-gray-300');
+            button.classList.add('border-red-500', 'text-red-500', 'bg-red-500/10');
+            button.querySelector('.heart-icon').innerHTML = '❤️';
+            button.querySelector('.favorite-text').textContent = 'В избранном';
+        } else {
+            // Update to unfavorited state
+            button.classList.remove('border-red-500', 'text-red-500', 'bg-red-500/10');
+            button.classList.add('border-gray-700', 'text-gray-300');
+            button.querySelector('.heart-icon').innerHTML = '🤍';
+            button.querySelector('.favorite-text').textContent = 'В избранное';
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling favorite:', error);
+        alert('Произошла ошибка. Попробуйте позже.');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auction Countdown Timer
+    const timerContainer = document.getElementById('countdown-timer');
+    
+    if (timerContainer) {
+        const endDateStr = timerContainer.dataset.end;
+        const endDate = new Date(endDateStr);
+        
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+        const statusEl = document.getElementById('auction-status');
+        const bidFormContainer = document.getElementById('bid-form-container');
+        const bidSubmitBtn = document.getElementById('bid-submit-btn');
+        
+        function updateCountdown() {
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff <= 0) {
+                // Auction ended
+                if (daysEl) daysEl.textContent = '00';
+                if (hoursEl) hoursEl.textContent = '00';
+                if (minutesEl) minutesEl.textContent = '00';
+                if (secondsEl) secondsEl.textContent = '00';
+                
+                if (statusEl) {
+                    statusEl.classList.remove('hidden');
+                }
+                
+                if (bidFormContainer) {
+                    bidFormContainer.style.opacity = '0.5';
+                    bidFormContainer.style.pointerEvents = 'none';
+                }
+                
+                if (bidSubmitBtn) {
+                    bidSubmitBtn.disabled = true;
+                    bidSubmitBtn.textContent = '🔒 АУКЦИОН ЗАВЕРШЁН';
+                    bidSubmitBtn.classList.add('cursor-not-allowed', 'opacity-50');
+                }
+                
+                return;
+            }
+            
+            // Calculate time units
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            // Update DOM with leading zeros
+            if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+            
+            // Visual urgency effects
+            if (diff < 3600000) { // Less than 1 hour
+                timerContainer.classList.add('animate-pulse');
+                if (daysEl) daysEl.classList.add('text-red-500');
+                if (hoursEl) hoursEl.classList.add('text-red-500');
+                if (minutesEl) minutesEl.classList.add('text-red-500');
+                if (secondsEl) secondsEl.classList.add('text-red-500');
+            } else if (diff < 86400000) { // Less than 24 hours
+                if (hoursEl) hoursEl.classList.add('text-yellow-500');
+                if (minutesEl) minutesEl.classList.add('text-yellow-500');
+            }
+        }
+        
+        // Initial update
+        updateCountdown();
+        
+        // Update every second
+        setInterval(updateCountdown, 1000);
+    }
+    
+    // Bid form validation enhancement
+    const bidForm = document.getElementById('bid-form');
+    if (bidForm) {
+        bidForm.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('bid-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Отправка...';
+            }
+        });
+    }
+});
+</script>
+
+<!-- Q&A / Comments Section -->
+<div class="mt-12 max-w-4xl mx-auto">
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6">
+        <h2 class="text-3xl font-bold text-[#D4AF37] mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Вопросы и Ответы
+        </h2>
+        
+        <!-- Comment Form -->
+        {% if user.is_authenticated %}
+        <div class="mb-8 bg-[#121212] rounded-lg p-5 border border-gray-700">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="{{ comment_form.text.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        💬 Задайте вопрос продавцу
+                    </label>
+                    {{ comment_form.text }}
+                    {% if comment_form.text.errors %}
+                        <p class="text-red-500 text-sm mt-2">{{ comment_form.text.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="w-full px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                    📤 Отправить вопрос
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="mb-8 bg-blue-900/20 border border-blue-700/50 rounded-lg p-5 text-center">
+            <p class="text-gray-300 mb-3">Чтобы задать вопрос, необходимо войти в систему</p>
+            <a href="{% url 'login' %}?next={{ request.path }}" class="inline-block px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                🔑 Войти
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Comments List -->
+        <div class="space-y-4">
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="bg-[#121212] rounded-lg p-5 border border-gray-700 hover:border-[#D4AF37] transition">
+                    <div class="flex items-start">
+                        <!-- User Avatar -->
+                        <div class="flex-shrink-0 mr-4">
+                            <div class="w-12 h-12 rounded-full bg-[#D4AF37] flex items-center justify-center text-black font-bold text-xl">
+                                {{ comment.user.username|slice:":1"|upper }}
+                            </div>
+                        </div>
+                        
+                        <!-- Comment Content -->
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-[#D4AF37]">{{ comment.user.username }}</span>
+                                    {% if comment.user == pigeon.owner %}
+                                    <span class="px-2 py-1 bg-[#D4AF37] text-black text-xs font-semibold rounded">
+                                        Продавец
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm text-gray-500">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <p class="text-gray-200 leading-relaxed">{{ comment.text }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-12 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p class="text-lg">Пока нет вопросов</p>
+                <p class="text-sm mt-2">Будьте первым, кто задаст вопрос!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 {% endblock %}
+

@@ -4,6 +4,15 @@ Models for GolubBozor - Pigeon Marketplace
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+# Auction system: listing type choices
+LISTING_TYPE_CHOICES = [
+    ('fixed', 'Фиксированная цена'),
+    ('auction', 'Аукцион'),
+]
 
 
 class Pigeon(models.Model):
@@ -11,11 +20,17 @@ class Pigeon(models.Model):
     Model representing a pigeon listing on the marketplace
     """
     
-    # Breed choices
+    # Breed choices (Extended list for better variety)
     BREED_CHOICES = [
         ('lailaki', 'Лайлаки'),
-        ('chinny', 'Чинни'),
         ('sochi', 'Сочи'),
+        ('chinny', 'Чинны'),
+        ('sych', 'Сыч'),
+        ('zhuk', 'Жук'),
+        ('mallya', 'Малля'),
+        ('kukcha', 'Кукча'),
+        ('tajik_highflyer', 'Таджикский Лётный'),
+        ('two_crested', 'Двухчубый'),
         ('tugma', 'Тугма'),
         ('metis', 'Метис'),
         ('other', 'Другая'),
@@ -177,6 +192,67 @@ class Pigeon(models.Model):
         verbose_name='Дата обновления'
     )
     
+    # Auction system fields
+    listing_type = models.CharField(
+        max_length=10,
+        choices=LISTING_TYPE_CHOICES,
+        default='fixed',
+        verbose_name='Тип продажи'
+    )
+    
+    start_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Начальная цена (для аукциона)',
+        help_text='Минимальная ставка для аукциона'
+    )
+    
+    current_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Текущая цена',
+        help_text='Обновляется автоматически при новых ставках'
+    )
+    
+    auction_end_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата окончания аукциона'
+    )
+    
+    is_sold = models.BooleanField(
+        default=False,
+        verbose_name='Продан'
+    )
+    
+    winner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='won_auctions',
+        verbose_name='Победитель аукциона'
+    )
+    
+    # Payment verification fields for auctions
+    payment_receipt = models.ImageField(
+        upload_to='receipts/',
+        blank=True,
+        null=True,
+        verbose_name='Чек оплаты',
+        help_text='Скриншот чека оплаты для аукциона (3 TJS)'
+    )
+    
+    is_paid = models.BooleanField(
+        default=False,
+        verbose_name='Оплачено',
+        help_text='Оплата подтверждена администратором'
+    )
+    
     class Meta:
         verbose_name = 'Голубь'
         verbose_name_plural = 'Голуби'
@@ -212,3 +288,236 @@ class Pigeon(models.Model):
             return f'https://www.youtube.com/embed/{video_id}'
         
         return None
+    
+    def is_auction_active(self):
+        """Check if auction is currently active"""
+        if self.listing_type != 'auction':
+            return False
+        if self.is_sold:
+            return False
+        if self.auction_end_date:
+            from django.utils import timezone
+            return timezone.now() < self.auction_end_date
+        return False
+    
+    def get_highest_bid(self):
+        """Get the highest bid for this pigeon"""
+        return self.bids.first()
+    
+    def get_bid_count(self):
+        """Get total number of bids"""
+        return self.bids.count()
+
+
+class Bid(models.Model):
+    """Model for auction bids"""
+    pigeon = models.ForeignKey(
+        'Pigeon',
+        on_delete=models.CASCADE,
+        related_name='bids',
+        verbose_name='Голубь'
+    )
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='my_bids',
+        verbose_name='Покупатель'
+    )
+    
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Сумма ставки'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Время ставки'
+    )
+    
+    class Meta:
+        ordering = ['-amount', '-created_at']
+        verbose_name = 'Ставка'
+        verbose_name_plural = 'Ставки'
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.amount} TJS на {self.pigeon.title}"
+
+
+class Comment(models.Model):
+    """Model for pigeon Q&A comments"""
+    pigeon = models.ForeignKey(
+        'Pigeon',
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Голубь'
+    )
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор'
+    )
+    
+    text = models.TextField(
+        verbose_name='Вопрос/Комментарий',
+        help_text='Ваш вопрос о голубе'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+        
+    def __str__(self):
+        return f"{self.user.username}: {self.text[:50]}..."
+
+
+class UserProfile(models.Model):
+    """Extended user profile for additional fields"""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        verbose_name='Пользователь'
+    )
+    
+    telegram_chat_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Telegram Chat ID',
+        help_text='ID для уведомлений в Telegram (получите у @userinfobot)'
+    )
+    
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+    
+    def __str__(self):
+        return f"Profile of {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create profile when user is created"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Save profile when user is saved"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+
+
+class Review(models.Model):
+    """
+    User review/rating model for sellers
+    """
+    RATING_CHOICES = [
+        (1, '⭐ 1 - Очень плохо'),
+        (2, '⭐⭐ 2 - Плохо'),
+        (3, '⭐⭐⭐ 3 - Нормально'),
+        (4, '⭐⭐⭐⭐ 4 - Хорошо'),
+        (5, '⭐⭐⭐⭐⭐ 5 - Отлично'),
+    ]
+    
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_reviews',
+        verbose_name='Продавец'
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='wrote_reviews',
+        verbose_name='Автор отзыва'
+    )
+    
+    rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        verbose_name='Оценка'
+    )
+    
+    text = models.TextField(
+        blank=True,
+        verbose_name='Комментарий',
+        help_text='Опишите ваш опыт покупки'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ['-created_at']
+        # Constraint: One review per author-seller pair
+        unique_together = ['seller', 'author']
+        # Constraint: User cannot review themselves
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(seller=models.F('author')),
+                name='no_self_review'
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.author.username} → {self.seller.username}: {self.rating}⭐"
+    
+    def get_stars_display(self):
+        """Return visual star representation"""
+        filled = '⭐' * self.rating
+        empty = '☆' * (5 - self.rating)
+        return filled + empty
+
+
+class PigeonImage(models.Model):
+    """
+    Model for storing multiple images for a single pigeon listing
+    Supports up to 5 images per pigeon for better presentation
+    """
+    pigeon = models.ForeignKey(
+        Pigeon,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Голубь'
+    )
+    
+    image = models.ImageField(
+        upload_to='pigeon_images/',
+        verbose_name='Изображение'
+    )
+    
+    order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Порядок',
+        help_text='Порядок отображения изображения (0 = первое)'
+    )
+    
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата загрузки'
+    )
+    
+    class Meta:
+        verbose_name = 'Изображение голубя'
+        verbose_name_plural = 'Изображения голубей'
+        ordering = ['order', 'uploaded_at']
+    
+    def __str__(self):
+        return f"{self.pigeon.title} - Image {self.order + 1}"
+

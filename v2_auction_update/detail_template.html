@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ pigeon.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- ЛЕВАЯ КОЛОНКА: Изображения -->
+        <div class="col-md-6">
+            <div id="pigeonCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% if pigeon.image1 %}
+                    <div class="carousel-item active">
+                        <img src="{{ pigeon.image1.url }}" class="d-block w-100" alt="{{ pigeon.title }}">
+                    </div>
+                    {% endif %}
+                    {% if pigeon.image2 %}
+                    <div class="carousel-item">
+                        <img src="{{ pigeon.image2.url }}" class="d-block w-100" alt="{{ pigeon.title }}">
+                    </div>
+                    {% endif %}
+                    {% if pigeon.image3 %}
+                    <div class="carousel-item">
+                        <img src="{{ pigeon.image3.url }}" class="d-block w-100" alt="{{ pigeon.title }}">
+                    </div>
+                    {% endif %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#pigeonCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#pigeonCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: Информация -->
+        <div class="col-md-6">
+            <h1 class="mb-3">{{ pigeon.title }}</h1>
+            
+            <!-- Тип продажи -->
+            {% if pigeon.listing_type == 'auction' %}
+            <div class="alert alert-warning">
+                <i class="bi bi-hammer"></i> <strong>АУКЦИОН</strong>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-tag"></i> <strong>Фиксированная цена</strong>
+            </div>
+            {% endif %}
+
+            <!-- Цена -->
+            {% if pigeon.listing_type == 'fixed' %}
+            <div class="mb-3">
+                <h2 class="text-success">{{ pigeon.price }} TJS</h2>
+            </div>
+            {% else %}
+                <!-- АУКЦИОН -->
+                <div class="card mb-3 bg-dark border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Текущая ставка</h5>
+                        <h2 class="text-warning">
+                            {{ pigeon.current_price|default:pigeon.start_price }} TJS
+                        </h2>
+                        
+                        <p class="mb-1">
+                            <strong>Начальная цена:</strong> {{ pigeon.start_price }} TJS
+                        </p>
+                        <p class="mb-1">
+                            <strong>Количество ставок:</strong> {{ pigeon.get_bid_count }}
+                        </p>
+                        <p class="mb-3">
+                            <strong>Окончание:</strong> 
+                            <span id="countdown" data-end="{{ pigeon.auction_end_date|date:'c' }}">
+                                {{ pigeon.auction_end_date|date:'d.m.Y H:i' }}
+                            </span>
+                        </p>
+
+                        {% if pigeon.is_auction_active %}
+                            <span class="badge bg-success">Активный</span>
+                        {% else %}
+                            <span class="badge bg-danger">Завершён</span>
+                            {% if pigeon.winner %}
+                            <p class="mt-2">
+                                <strong>Победитель:</strong> {{ pigeon.winner.username }}
+                            </p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ФОРМА СТАВКИ -->
+                {% if bid_form and pigeon.is_auction_active %}
+                <div class="card mb-3 border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Сделать ставку</h5>
+                        <form method="post" action="{% url 'place_bid' pigeon.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ bid_form.amount.label_tag }}
+                                {{ bid_form.amount }}
+                                {% if bid_form.amount.help_text %}
+                                <small class="form-text text-muted">{{ bid_form.amount.help_text }}</small>
+                                {% endif %}
+                                {% if bid_form.amount.errors %}
+                                <div class="text-danger">{{ bid_form.amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-hammer"></i> Сделать ставку
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% elif not user.is_authenticated %}
+                <div class="alert alert-info">
+                    <a href="{% url 'login' %}">Войдите</a>, чтобы сделать ставку
+                </div>
+                {% endif %}
+
+                <!-- ИСТОРИЯ СТАВОК -->
+                {% if bids %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">История ставок</h5>
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Покупатель</th>
+                                    <th>Ставка</th>
+                                    <th>Время</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bid in bids %}
+                                <tr>
+                                    <td>{{ bid.user.username }}</td>
+                                    <td class="text-warning"><strong>{{ bid.amount }} TJS</strong></td>
+                                    <td>{{ bid.created_at|date:'d.m H:i' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Информация о голубе -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">О голубе</h5>
+                    <p><strong>Возраст:</strong> {{ pigeon.age }} месяцев</p>
+                    <p><strong>Описание:</strong></p>
+                    <p>{{ pigeon.description }}</p>
+                    <p class="text-muted">
+                        <small>Опубликовано: {{ pigeon.created_at|date:'d.m.Y H:i' }}</small>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Продавец -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Продавец</h5>
+                    <p><strong>{{ pigeon.user.username }}</strong></p>
+                    <a href="tel:+992888788181" class="btn btn-outline-warning">
+                        <i class="bi bi-telephone"></i> Связаться
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- СКРИПТ ДЛЯ ОБРАТНОГО ОТСЧЁТА -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countdownEl = document.getElementById('countdown');
+    if (countdownEl) {
+        const endDate = new Date(countdownEl.dataset.end);
+        
+        function updateCountdown() {
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff <= 0) {
+                countdownEl.textContent = 'Аукцион завершён';
+                countdownEl.classList.add('text-danger');
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let text = '';
+            if (days > 0) text += `${days}д `;
+            text += `${hours}ч ${minutes}м ${seconds}с`;
+            
+            countdownEl.textContent = text;
+        }
+        
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard - Проверка оплат{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold text-[#D4AF37] mb-2">🛡️ Manager Dashboard</h1>
+            <p class="text-gray-400">Проверка чеков оплаты за аукционы</p>
+        </div>
+        <div class="text-right">
+            <div class="text-3xl font-bold text-[#D4AF37]">{{ pending_count }}</div>
+            <div class="text-sm text-gray-400">на проверке</div>
+        </div>
+    </div>
+</div>
+
+<!-- Django Messages -->
+{% if messages %}
+<div class="mb-6">
+    {% for message in messages %}
+    <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-900/30 border border-green-700 text-green-300{% elif message.tags == 'warning' %}bg-yellow-900/30 border border-yellow-700 text-yellow-300{% else %}bg-blue-900/30 border border-blue-700 text-blue-300{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm mb-1">Ожидают проверки</p>
+                <p class="text-3xl font-bold text-[#D4AF37]">{{ pending_count }}</p>
+            </div>
+            <div class="w-12 h-12 bg-[#D4AF37]/20 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm mb-1">Требуемая оплата</p>
+                <p class="text-3xl font-bold text-green-400">3 TJS</p>
+            </div>
+            <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm mb-1">Платежный номер</p>
+                <p class="text-lg font-bold text-gray-200">+992 888 788 181</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Payments Table -->
+{% if pending_payments %}
+<div class="bg-[#1a1a1a] border border-gray-800 rounded-lg overflow-hidden">
+    <!-- Table Header -->
+    <div class="bg-[#0a0a0a] px-6 py-4 border-b border-gray-800">
+        <h2 class="text-xl font-bold text-[#D4AF37]">📋 Чеки на проверке</h2>
+    </div>
+    
+    <!-- Table Content -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-[#0a0a0a] border-b border-gray-800">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Объявление</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Владелец</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Чек оплаты</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Дата создания</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Действия</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for pigeon in pending_payments %}
+                <tr class="hover:bg-[#0a0a0a]/50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-mono text-gray-400">#{{ pigeon.id }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <img src="{{ pigeon.image.url }}" alt="{{ pigeon.title }}" class="w-12 h-12 rounded-lg object-cover mr-3">
+                            <div>
+                                <div class="text-sm font-semibold text-gray-200">{{ pigeon.title|truncatewords:5 }}</div>
+                                <div class="text-xs text-gray-500">Стартовая: {{ pigeon.start_price }} TJS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-black font-bold text-sm mr-2">
+                                {{ pigeon.owner.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-200">{{ pigeon.owner.username }}</div>
+                                <div class="text-xs text-gray-500">{{ pigeon.owner.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if pigeon.payment_receipt %}
+                        <a href="{{ pigeon.payment_receipt.url }}" target="_blank" class="block group">
+                            <img 
+                                src="{{ pigeon.payment_receipt.url }}" 
+                                alt="Receipt" 
+                                class="w-20 h-20 object-cover rounded-lg border-2 border-gray-700 group-hover:border-[#D4AF37] transition cursor-zoom-in"
+                            >
+                            <span class="text-xs text-[#D4AF37] group-hover:underline mt-1 block">Открыть полный размер</span>
+                        </a>
+                        {% else %}
+                        <span class="text-xs text-gray-500">Нет чека</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-300">{{ pigeon.created_at|date:"d.m.Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ pigeon.created_at|date:"H:i" }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                            <!-- Approve Button -->
+                            <form method="POST" action="{% url 'approve_payment' pigeon.id %}" class="inline">
+                                {% csrf_token %}
+                                <button 
+                                    type="submit"
+                                    onclick="return confirm('Подтвердить оплату для аукциона \"{{ pigeon.title }}\"?')"
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Принять
+                                </button>
+                            </form>
+                            
+                            <!-- Reject Button -->
+                            <form method="POST" action="{% url 'reject_payment' pigeon.id %}" class="inline">
+                                {% csrf_token %}
+                                <button 
+                                    type="submit"
+                                    onclick="return confirm('Отклонить оплату для аукциона \"{{ pigeon.title }}\"? Пользователь будет уведомлен.')"
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Отклонить
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="bg-[#1a1a1a] border border-gray-800 rounded-lg p-12 text-center">
+    <div class="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-300 mb-2">Все чеки проверены! ✅</h3>
+    <p class="text-gray-500">Нет ожидающих проверки платежей</p>
+</div>
+{% endif %}
+
+<!-- Back Button -->
+<div class="mt-8">
+    <a href="{% url 'home' %}" class="inline-flex items-center px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg font-semibold transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Вернуться на главную
+    </a>
+</div>
+
+{% endblock %}

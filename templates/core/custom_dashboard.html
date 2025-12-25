@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}Command Center - ГолубБозор{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-5xl font-bold mb-2 gold-text">📊 Command Center</h1>
+            <p class="text-gray-400 text-lg">Real-time analytics & site management</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-500">{{ request.user.username }}</p>
+            <p class="text-xs text-gray-600">{{ request.user.get_full_name|default:"Administrator" }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Users -->
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-4xl">👥</div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider">Users</div>
+        </div>
+        <div class="text-5xl font-bold gold-text mb-2">{{ total_users }}</div>
+        <p class="text-gray-400 text-sm">Registered users</p>
+    </div>
+    
+    <!-- Total Pigeons -->
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-4xl">🦅</div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider">Listings</div>
+        </div>
+        <div class="text-5xl font-bold gold-text mb-2">{{ total_pigeons }}</div>
+        <p class="text-gray-400 text-sm">Total pigeons</p>
+    </div>
+    
+    <!-- Active Auctions -->
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-4xl">🔨</div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider">Auctions</div>
+        </div>
+        <div class="text-5xl font-bold gold-text mb-2">{{ active_auctions }}</div>
+        <p class="text-gray-400 text-sm">Active auctions</p>
+    </div>
+    
+    <!-- Total Revenue -->
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-4xl">💰</div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider">Revenue</div>
+        </div>
+        <div class="text-5xl font-bold gold-text mb-2">{{ total_revenue }}</div>
+        <p class="text-gray-400 text-sm">TJS earned</p>
+    </div>
+</div>
+
+<!-- Secondary Statistics -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
+        <div class="text-2xl gold-text font-bold mb-1">{{ approved_pigeons }}</div>
+        <p class="text-gray-500 text-xs">✅ Approved</p>
+    </div>
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
+        <div class="text-2xl gold-text font-bold mb-1">{{ pending_pigeons }}</div>
+        <p class="text-gray-500 text-xs">⏳ Pending</p>
+    </div>
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
+        <div class="text-2xl gold-text font-bold mb-1">{{ vip_pigeons }}</div>
+        <p class="text-gray-500 text-xs">⭐ VIP</p>
+    </div>
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
+        <div class="text-2xl gold-text font-bold mb-1">{{ sold_pigeons }}</div>
+        <p class="text-gray-500 text-xs">🎯 Sold</p>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-6 mb-8">
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="mr-3">⚡</span> Quick Actions
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/control_panel_secret_x99/" class="block px-6 py-4 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition text-center">
+            🛡️ Django Admin Panel
+        </a>
+        <a href="{% url 'manager_dashboard' %}" class="block px-6 py-4 bg-red-900/30 border-2 border-red-700 text-red-400 font-semibold rounded-lg hover:bg-red-900/50 transition text-center">
+            💳 Payment Manager
+        </a>
+        <a href="https://t.me/GolubBozorChannel" target="_blank" class="block px-6 py-4 bg-blue-900/30 border-2 border-blue-700 text-blue-400 font-semibold rounded-lg hover:bg-blue-900/50 transition text-center">
+            📢 Telegram Channel
+        </a>
+    </div>
+    {% if pending_approvals > 0 %}
+    <div class="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+        <p class="text-yellow-400">⚠️ <strong>{{ pending_approvals }}</strong> payment(s) waiting for approval!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Activity Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Users -->
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-3">👤</span> New Users
+        </h2>
+        {% if recent_users %}
+        <div class="space-y-3">
+            {% for user in recent_users %}
+            <div class="flex items-center justify-between p-3 bg-[#121212] rounded-lg border border-gray-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-[#D4AF37] rounded-full flex items-center justify-center text-black font-bold">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-200">{{ user.username }}</p>
+                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-500">{{ user.date_joined|date:"d.m.Y" }}</p>
+                    <p class="text-xs text-gray-600">{{ user.date_joined|date:"H:i" }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No users yet</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Listings -->
+    <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-3">🦅</span> Recent Listings
+        </h2>
+        {% if recent_pigeons %}
+        <div class="space-y-3">
+            {% for pigeon in recent_pigeons %}
+            <div class="flex items-center justify-between p-3 bg-[#121212] rounded-lg border border-gray-800">
+                <div class="flex items-center space-x-3">
+                    {% if pigeon.image %}
+                    <img src="{{ pigeon.image.url }}" alt="{{ pigeon.title }}" class="w-12 h-12 object-cover rounded">
+                    {% else %}
+                    <div class="w-12 h-12 bg-gray-700 rounded flex items-center justify-center text-2xl">
+                        🦅
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="font-semibold text-gray-200 line-clamp-1">
+                            {% if pigeon.is_vip %}⭐{% endif %} {{ pigeon.title }}
+                        </p>
+                        <p class="text-xs text-gray-500">by @{{ pigeon.owner.username }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="font-bold gold-text">{{ pigeon.price|default:pigeon.start_price }} TJS</p>
+                    <p class="text-xs text-gray-600">{{ pigeon.created_at|date:"d.m H:i" }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No listings yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Footer Info -->
+<div class="mt-8 text-center text-gray-600 text-sm">
+    <p>🦅 GolubBozor Command Center • Last updated: {{ request.META.HTTP_HOST }} • Server time: {% now "H:i:s d.m.Y" %}</p>
+</div>
+{% endblock %}

@@ -19,10 +19,12 @@ ON_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here-change-in-production')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# 🔒 SECURITY: DEBUG = False hides sensitive error pages and stack traces from users.
+# CRITICAL: Never set DEBUG = True in production! It exposes secret keys, file paths, and SQL queries.
+DEBUG = False  # Set to False for production security
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.125.11', '10.134.72.123', '.onrender.com', '.pythonanywhere.com', 'magaj.pythonanywhere.com']
+# 🔒 SECURITY: Only allow requests from these domains (prevents host header attacks)
+ALLOWED_HOSTS = ['magaj.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 # Для PythonAnywhere добавляем домен
 if ON_PYTHONANYWHERE:
@@ -152,3 +154,16 @@ AXES_FAILURE_LIMIT = 5  # Block after 5 failed attempts
 AXES_COOLOFF_TIME = 1  # Block for 1 hour (in hours)
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by username + IP (new syntax)
 AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
+
+# Site domain for building absolute URLs (used in Telegram channel posting)
+SITE_DOMAIN = 'http://127.0.0.1:8000'
+
+# 🔒 SECURITY: Cookie security settings for HTTPS
+# TODO: Set these to True when HTTPS is active on production
+CSRF_COOKIE_SECURE = False  # Set to True when using HTTPS (prevents CSRF token theft)
+SESSION_COOKIE_SECURE = False  # Set to True when using HTTPS (prevents session hijacking)
+CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF token
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SECURE_BROWSER_XSS_FILTER = True  # Enable browser XSS protection
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks
