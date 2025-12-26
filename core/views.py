@@ -206,6 +206,12 @@ def add_pigeon(request):
                 messages.success(request, f'✅ Объявление создано!{gallery_msg} Оно появится на сайте после проверки администратором.')
             
             return redirect('my_pigeons')
+        else:
+            # Отладка: выводим ошибки формы в консоль
+            print("="*50)
+            print("ОШИБКИ ФОРМЫ:", form.errors)
+            print("="*50)
+            messages.error(request, '❌ Ошибка в форме. Проверьте все поля.')
     else:
         form = PigeonForm()
     
