@@ -281,7 +281,9 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
+            
             messages.success(request, 'Регистрация успешна! Добро пожаловать!')
             return redirect('home')
     else:
