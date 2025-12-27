@@ -7,8 +7,9 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# Telegram Bot Token - Replace with your actual token
-TELEGRAM_BOT_TOKEN = "8184229746:AAFIlY6d284Ti1-wqGrRi09-d97M1Xn2eYU"
+# Telegram Bot Configuration from environment variables
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 TELEGRAM_PHOTO_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
 
