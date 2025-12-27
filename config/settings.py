@@ -6,6 +6,10 @@ from pathlib import Path
 import os
 import dj_database_url
 
+# Загрузка переменных окружения из .env файла (для локальной разработки)
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,18 +21,22 @@ ON_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here-change-in-production')
+# 🔒 ВАЖНО: Для продакшена создайте новый SECRET_KEY и добавьте в .env
+# Генератор: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+c6f7b^h9k@8_h$l!@8m6+9q9&^3u0x_y9k8j7h6g5f4d3s2a1')
 
 # 🔒 SECURITY: DEBUG = False hides sensitive error pages and stack traces from users.
 # CRITICAL: Never set DEBUG = True in production! It exposes secret keys, file paths, and SQL queries.
-DEBUG = False  # Set to False for production security
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # 🔒 SECURITY: Only allow requests from these domains (prevents host header attacks)
-ALLOWED_HOSTS = ['magaj.pythonanywhere.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Для PythonAnywhere добавляем домен
 if ON_PYTHONANYWHERE:
-    ALLOWED_HOSTS.append(os.environ.get('PYTHONANYWHERE_DOMAIN', ''))
+    pythonanywhere_domain = os.environ.get('PYTHONANYWHERE_DOMAIN', '')
+    if pythonanywhere_domain and pythonanywhere_domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(pythonanywhere_domain)
 
 
 # Application definition
@@ -146,8 +154,8 @@ LOGIN_REDIRECT_URL = 'home'
 
 # Django Axes settings for brute force protection
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',  # AxesStandaloneBackend should be first
-    'django.contrib.auth.backends.ModelBackend',
+    'axes.backends.AxesBackend',  # AxesBackend should be first (for django-axes)
+    'django.contrib.auth.backends.ModelBackend',  # Standard Django authentication
 ]
 
 AXES_FAILURE_LIMIT = 5  # Block after 5 failed attempts
@@ -156,14 +164,24 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by username + IP 
 AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
 
 # Site domain for building absolute URLs (used in Telegram channel posting)
-SITE_DOMAIN = 'http://127.0.0.1:8000'
+SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'http://127.0.0.1:8000')
 
 # 🔒 SECURITY: Cookie security settings for HTTPS
-# TODO: Set these to True when HTTPS is active on production
-CSRF_COOKIE_SECURE = False  # Set to True when using HTTPS (prevents CSRF token theft)
-SESSION_COOKIE_SECURE = False  # Set to True when using HTTPS (prevents session hijacking)
+# Эти настройки автоматически включаются для продакшена
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False') == 'True'
+
+# Всегда включены (безопасны для любого окружения)
 CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF token
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 SECURE_BROWSER_XSS_FILTER = True  # Enable browser XSS protection
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
 X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks
+
+# HSTS (включать только на продакшене с HTTPS)
+if not DEBUG and SECURE_SSL_REDIRECT:
+    SECURE_HSTS_SECONDS = 31536000  # 1 год
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

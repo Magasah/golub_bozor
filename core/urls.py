@@ -52,4 +52,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(
         next_page='home'
     ), name='logout'),
+    
+    # Health Encyclopedia
+    path('health/', views.health_list, name='health_list'),
+    path('health/<slug:slug>/', views.health_detail, name='health_detail'),
 ]

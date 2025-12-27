@@ -521,3 +521,122 @@ class PigeonImage(models.Model):
     def __str__(self):
         return f"{self.pigeon.title} - Image {self.order + 1}"
 
+
+class HealthGuide(models.Model):
+    """
+    Model for Health Encyclopedia - guides for pigeon diseases and treatment
+    """
+    # Titles in both languages
+    title_ru = models.CharField(
+        max_length=255,
+        verbose_name='Название (RU)'
+    )
+    
+    title_tj = models.CharField(
+        max_length=255,
+        verbose_name='Название (TJ)'
+    )
+    
+    # Descriptions
+    description_ru = models.TextField(
+        verbose_name='Описание (RU)',
+        help_text='Краткое описание заболевания'
+    )
+    
+    description_tj = models.TextField(
+        verbose_name='Описание (TJ)',
+        help_text='Краткое описание заболевания'
+    )
+    
+    # Symptoms
+    symptoms_ru = models.TextField(
+        verbose_name='Симптомы (RU)',
+        help_text='Описание симптомов заболевания'
+    )
+    
+    symptoms_tj = models.TextField(
+        verbose_name='Симптомы (TJ)',
+        help_text='Описание симптомов заболевания'
+    )
+    
+    # Treatment
+    treatment_ru = models.TextField(
+        verbose_name='Лечение (RU)',
+        help_text='Методы и рекомендации по лечению'
+    )
+    
+    treatment_tj = models.TextField(
+        verbose_name='Лечение (TJ)',
+        help_text='Методы и рекомендации по лечению'
+    )
+    
+    # Image
+    image = models.ImageField(
+        upload_to='health_guides/',
+        verbose_name='Изображение',
+        help_text='Главное изображение для статьи'
+    )
+    
+    # YouTube video (optional)
+    youtube_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='YouTube видео',
+        help_text='Ссылка на видео (например: https://www.youtube.com/watch?v=VIDEO_ID)'
+    )
+    
+    # Slug for URLs
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        verbose_name='URL slug',
+        help_text='Будет создан автоматически из названия'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+    )
+    
+    class Meta:
+        verbose_name = 'Статья о здоровье'
+        verbose_name_plural = 'Энциклопедия лечения'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.title_ru
+    
+    def get_absolute_url(self):
+        return reverse('health_detail', kwargs={'slug': self.slug})
+    
+    def get_youtube_embed_url(self):
+        """
+        Convert regular YouTube URL to embed URL for iframe
+        Supports formats:
+        - https://www.youtube.com/watch?v=VIDEO_ID
+        - https://youtu.be/VIDEO_ID
+        """
+        if not self.youtube_url:
+            return None
+        
+        video_id = None
+        
+        # Handle youtube.com/watch?v= format
+        if 'youtube.com/watch?v=' in self.youtube_url:
+            video_id = self.youtube_url.split('watch?v=')[1].split('&')[0]
+        # Handle youtu.be/ format
+        elif 'youtu.be/' in self.youtube_url:
+            video_id = self.youtube_url.split('youtu.be/')[1].split('?')[0]
+        
+        if video_id:
+            return f'https://www.youtube.com/embed/{video_id}'
+        
+        return None
+

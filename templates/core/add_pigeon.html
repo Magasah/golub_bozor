@@ -16,6 +16,34 @@
         <form method="post" enctype="multipart/form-data" class="space-y-6">
             {% csrf_token %}
             
+            <!-- Form Errors Display -->
+            {% if form.errors %}
+            <div class="border-2 border-red-600 bg-red-900/30 rounded-lg p-5 mb-6">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-lg font-bold text-red-400 mb-2">❌ Ошибки в форме:</p>
+                        <ul class="list-disc list-inside space-y-1 text-red-300">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if form.non_field_errors %}
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Listing Type (Radio Buttons) -->
             <div class="border-2 border-[#D4AF37] rounded-lg p-5 bg-[#121212]">
                 <label class="block text-lg font-bold text-[#D4AF37] mb-4">
@@ -67,7 +95,7 @@
                         <p class="text-sm text-gray-400 mb-2">Alif / DC Money:</p>
                         <div class="flex items-center justify-center gap-3">
                             <p id="phoneNumber" class="text-3xl md:text-4xl font-bold text-[#D4AF37] tracking-wider">+992 888 788 181</p>
-                            <button type="button" onclick="copyPhoneNumber()" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
+                            <button type="button" onclick="copyPhoneNumber()" class="px-5 py-3 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold rounded-xl hover:from-[#FFD700] hover:to-[#D4AF37] transition-all duration-300 shadow-lg shadow-[#D4AF37]/40 hover:shadow-[#FFD700]/50 hover:scale-110">
                                 📋 Копировать
                             </button>
                         </div>
@@ -198,43 +226,40 @@
                 {% endif %}
             </div>
             
-            <!-- Main Cover Image -->
-            <div>
-                <label for="{{ form.image.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    📸 Главное фото (Обложка) *
-                </label>
-                {{ form.image }}
-                {% if form.image.errors %}
-                    <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
-                {% endif %}
-                <p class="text-xs text-gray-500 mt-2">
-                    • Это фото будет отображаться в списке<br>
-                    • Рекомендуемый размер: 1200x800px
-                </p>
-            </div>
-            
-            <!-- Multiple Extra Images Upload (Gallery) -->
-            <div>
-                <label for="{{ form.extra_images.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    🖼️ Дополнительные фото (Галерея - до 5 фото)
-                </label>
-                {% if pigeon and pigeon.images.all %}
-                    <div class="mb-3 grid grid-cols-3 gap-2">
-                        {% for img in pigeon.images.all %}
-                        <img src="{{ img.image.url }}" alt="Image {{ forloop.counter }}" class="w-full h-24 object-cover rounded border-2 border-gray-700">
-                        {% endfor %}
-                    </div>
-                    <p class="text-sm text-gray-400 mb-2">Текущие изображения (можно заменить)</p>
-                {% endif %}
-                {{ form.extra_images }}
-                {% if form.extra_images.errors %}
-                    <p class="text-red-500 text-sm mt-1">{{ form.extra_images.errors.0 }}</p>
-                {% endif %}
-                <p class="text-xs text-gray-500 mt-2">
-                    • Необязательно: выберите до 5 дополнительных изображений<br>
-                    • Эти фото будут в галерее на странице объявления
-                </p>
-                <div id="imagePreview" class="mt-3 grid grid-cols-3 gap-2 hidden"></div>
+            <!-- SIMPLE PHOTO UPLOAD SYSTEM -->
+            <div class="border-2 border-[#D4AF37] rounded-xl p-6 bg-gradient-to-br from-[#1E1E1E] to-[#121212]">
+                
+                <!-- MAIN PHOTO (REQUIRED) -->
+                <div class="mb-6">
+                    <label for="{{ form.image.id_for_label }}" class="block text-lg font-bold text-[#D4AF37] mb-3">
+                        📸 Главное фото (обязательно)
+                    </label>
+                    <p class="text-sm text-gray-400 mb-3">Это фото будет отображаться в каталоге</p>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                        <div class="mt-3 p-3 bg-red-900/30 border border-red-600 rounded-lg">
+                            <p class="text-red-400 text-sm font-semibold">{{ form.image.errors.0 }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- EXTRA PHOTOS (OPTIONAL, 0-4) -->
+                <div>
+                    <label class="block text-lg font-bold text-[#D4AF37] mb-3">
+                        🖼️ Дополнительные фото (необязательно, до 4 штук)
+                    </label>
+                    <p class="text-sm text-gray-400 mb-3">Эти фото появятся в галерее на странице объявления</p>
+                    <input 
+                        type="file" 
+                        name="extra_images" 
+                        multiple 
+                        accept="image/*"
+                        class="block w-full px-6 py-4 bg-gradient-to-r from-[#1E1E1E] to-[#2A2A2A] border-2 border-gray-600 rounded-xl text-gray-200 focus:border-[#D4AF37] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 hover:border-[#FFD700] transition-all cursor-pointer file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+                    >
+                    <p class="text-xs text-gray-500 mt-2">
+                        Можно выбрать от 0 до 4 дополнительных фотографий
+                    </p>
+                </div>
             </div>
             
             <!-- Contact Information Section -->
@@ -332,11 +357,15 @@
             
             <!-- Buttons -->
             <div class="flex flex-col sm:flex-row gap-3 pt-4">
-                <button type="submit" id="submitButton" class="flex-1 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    {% if pigeon %}💾 Сохранить изменения{% else %}� Опубликовать лот{% endif %}
+                <button type="submit" id="submitButton" class="flex-1 px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold text-lg rounded-xl hover:from-[#FFD700] hover:to-[#D4AF37] transition-all duration-300 shadow-lg shadow-[#D4AF37]/50 hover:shadow-[#FFD700]/60 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                    {% if pigeon %}
+                        💾 Сохранить изменения
+                    {% else %}
+                        🚀 Опубликовать объявление
+                    {% endif %}
                 </button>
-                <a href="{% if pigeon %}{% url 'pigeon_detail' pigeon.pk %}{% else %}{% url 'home' %}{% endif %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
-                    Отмена
+                <a href="{% if pigeon %}{% url 'pigeon_detail' pigeon.pk %}{% else %}{% url 'home' %}{% endif %}" class="flex-1 text-center px-8 py-4 border-2 border-gray-600 text-gray-300 font-bold text-lg rounded-xl hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#2A2A2A] transition-all duration-300 hover:scale-105">
+                    ❌ Отмена
                 </a>
             </div>
         </form>
@@ -387,18 +416,36 @@ function toggleAuctionFields() {
     const auctionFields = document.getElementById('auctionFields');
     const fixedPriceField = document.getElementById('fixedPriceField');
     
+    // Get form fields
+    const priceInput = document.querySelector('input[name="price"]');
+    const startPriceInput = document.querySelector('input[name="start_price"]');
+    const auctionEndDateInput = document.querySelector('input[name="auction_end_date"]');
+    const paymentReceiptInput = document.querySelector('input[name="payment_receipt"]');
+    
     if (selectedType === 'auction') {
         // Show auction elements
         auctionWarning.classList.remove('hidden');
         paymentBox.classList.remove('hidden');
         auctionFields.classList.remove('hidden');
         fixedPriceField.classList.add('hidden');
+        
+        // Remove required from price, add to auction fields
+        if (priceInput) priceInput.removeAttribute('required');
+        if (startPriceInput) startPriceInput.setAttribute('required', 'required');
+        if (auctionEndDateInput) auctionEndDateInput.setAttribute('required', 'required');
+        if (paymentReceiptInput) paymentReceiptInput.setAttribute('required', 'required');
     } else {
         // Show fixed price elements
         auctionWarning.classList.add('hidden');
         paymentBox.classList.add('hidden');
         auctionFields.classList.add('hidden');
         fixedPriceField.classList.remove('hidden');
+        
+        // Add required to price, remove from auction fields
+        if (priceInput) priceInput.setAttribute('required', 'required');
+        if (startPriceInput) startPriceInput.removeAttribute('required');
+        if (auctionEndDateInput) auctionEndDateInput.removeAttribute('required');
+        if (paymentReceiptInput) paymentReceiptInput.removeAttribute('required');
     }
 }
 
@@ -422,47 +469,7 @@ function copyPhoneNumber() {
     });
 }
 
-// 📷 Image Preview Handler
-function handleImagePreview() {
-    const imageInput = document.querySelector('input[name="extra_images"]');
-    const previewContainer = document.getElementById('imagePreview');
-    
-    if (!imageInput) return;
-    
-    imageInput.addEventListener('change', function(e) {
-        const files = e.target.files;
-        previewContainer.innerHTML = '';
-        
-        if (files.length > 5) {
-            alert('⚠️ Можно загрузить максимум 5 изображений!');
-            imageInput.value = '';
-            previewContainer.classList.add('hidden');
-            return;
-        }
-        
-        if (files.length > 0) {
-            previewContainer.classList.remove('hidden');
-            
-            Array.from(files).forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.className = 'relative';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded border-2 border-[#D4AF37]" alt="Preview ${index + 1}">
-                        <span class="absolute top-1 left-1 bg-[#D4AF37] text-black text-xs font-bold px-2 py-1 rounded">${index + 1}</span>
-                    `;
-                    previewContainer.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-        } else {
-            previewContainer.classList.add('hidden');
-        }
-    });
-}
-
-// 💫 Loading Spinner Handler
+//💫 Loading Spinner Handler
 function setupLoadingSpinner() {
     const form = document.querySelector('form');
     const submitButton = document.getElementById('submitButton');
@@ -471,14 +478,45 @@ function setupLoadingSpinner() {
     if (!form || !submitButton || !loadingOverlay) return;
     
     form.addEventListener('submit', function(e) {
-        // Validate extra images count (optional gallery photos)
-        const imageInput = document.querySelector('input[name="extra_images"]');
+        console.log('Form submit triggered');
         
-        if (imageInput && imageInput.files.length > 5) {
+        // Check main image is uploaded
+        const mainImage = document.querySelector('input[name="image"]');
+        if (mainImage && (!mainImage.files || mainImage.files.length === 0)) {
             e.preventDefault();
-            alert('⚠️ Можно загрузить максимум 5 дополнительных изображений!');
+            alert('❌ Загрузите главное фото голубя!');
             return;
         }
+        
+        // Validate auction fields if auction type is selected
+        const listingType = document.querySelector('input[name="listing_type"]:checked');
+        console.log('Listing type:', listingType ? listingType.value : 'none');
+        
+        if (listingType && listingType.value === 'auction') {
+            const startPrice = document.querySelector('input[name="start_price"]');
+            const auctionEndDate = document.querySelector('input[name="auction_end_date"]');
+            const paymentReceipt = document.querySelector('input[name="payment_receipt"]');
+            
+            let missingFields = [];
+            
+            if (!startPrice || !startPrice.value) {
+                missingFields.push('Начальная цена');
+            }
+            if (!auctionEndDate || !auctionEndDate.value) {
+                missingFields.push('Дата окончания');
+            }
+            if (!paymentReceipt || !paymentReceipt.files || paymentReceipt.files.length === 0) {
+                missingFields.push('Чек оплаты');
+            }
+            
+            if (missingFields.length > 0) {
+                e.preventDefault();
+                alert('❌ Для аукциона заполните:\n\n• ' + missingFields.join('\n• '));
+                return;
+            }
+        }
+        
+        console.log('Form validation passed, submitting...');
         
         // Show loading overlay
         loadingOverlay.classList.remove('hidden');
@@ -492,8 +530,8 @@ function setupLoadingSpinner() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleAuctionFields();
-    handleImagePreview();
     setupLoadingSpinner();
+    console.log('Page loaded, scripts initialized');
 });
 </script>
 {% endblock %}

@@ -1,2 +1,182 @@
-venv/
+# ============================================
+# GITIGNORE ДЛЯ DJANGO ПРОЕКТА
+# GolubBozor - Премиум рынок голубей
+# ============================================
+
+# ========== PYTHON ==========
+# Compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ========== DJANGO ==========
+# Database
 *.sqlite3
+*.db
+db.sqlite3
+db.sqlite3-journal
+
+# Media files (загруженные пользователями)
+media/
+!media/.gitkeep
+
+# Static files (собранные)
+staticfiles/
+static_root/
+/static/
+
+# Django migrations (опционально - оставляем для деплоя)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Django logs
+*.log
+logs/
+*.pot
+
+# Django secret keys
+.env
+.env.local
+.env.*.local
+secrets.json
+
+# ========== VIRTUAL ENVIRONMENT ==========
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# ========== IDE & EDITORS ==========
+# VS Code
+.vscode/
+.history/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ========== OS ==========
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ========== BACKUP & TEMP ==========
+*.bak
+*.backup
+*.tmp
+*.temp
+*.old
+*.orig
+
+# ========== SECURITY ==========
+# SSL certificates
+*.pem
+*.key
+*.crt
+
+# SSH keys
+id_rsa
+id_rsa.pub
+
+# ========== DEPLOYMENT ==========
+# PythonAnywhere specific
+pa_autocomplete_api/
+.passenger_wsgi.py
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ========== PROJECT SPECIFIC ==========
+# Скрипты для тестирования (не нужны в Git)
+test_*.py
+debug_*.py
+check_*.py
+create_health_articles.py
+add_images_to_articles.py
+security_audit.py
+
+# Локальные заметки
+TODO.md
+NOTES.md
+LOCAL_*.txt
+
+# ========== KEEP EMPTY DIRS ==========
+!.gitkeep

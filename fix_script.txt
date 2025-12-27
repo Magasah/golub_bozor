@@ -1,0 +1,44 @@
+ //💫 Loading Spinner Handler
+function setupLoadingSpinner() {
+    const form = document.querySelector('form');
+    const submitButton = document.getElementById('submitButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    if (!form || !submitButton || !loadingOverlay) return;
+    
+    form.addEventListener('submit', function(e) {
+        // Validate auction fields if auction type is selected
+        const listingType = document.querySelector('input[name="listing_type"]:checked');
+        
+        if (listingType && listingType.value === 'auction') {
+            const startPrice = document.querySelector('input[name="start_price"]');
+            const auctionEndDate = document.querySelector('input[name="auction_end_date"]');
+            const paymentReceipt = document.querySelector('input[name="payment_receipt"]');
+            
+            let missingFields = [];
+            
+            if (!startPrice || !startPrice.value) {
+                missingFields.push('Начальная цена');
+            }
+            if (!auctionEndDate || !auctionEndDate.value) {
+                missingFields.push('Дата окончания');
+            }
+            if (!paymentReceipt || !paymentReceipt.files || paymentReceipt.files.length === 0) {
+                missingFields.push('Чек оплаты');
+            }
+            
+            if (missingFields.length > 0) {
+                e.preventDefault();
+                alert('❌ Для аукциона заполните:\n\n• ' + missingFields.join('\n• '));
+                return;
+            }
+        }
+        
+        // Show loading overlay
+        loadingOverlay.classList.remove('hidden');
+        
+        // Disable submit button
+        submitButton.disabled = true;
+        submitButton.textContent = '⚙️ Отправка...';
+    });
+}

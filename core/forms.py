@@ -1,5 +1,5 @@
 """
-Forms for GolubBozor
+Forms for GolubBozor - SIMPLE AND CLEAN
 """
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -8,105 +8,43 @@ from django.utils import timezone
 from .models import Pigeon, Bid, Comment, Review
 
 
-class MultipleFileInput(forms.ClearableFileInput):
-    """Custom widget to support multiple file uploads"""
-    allow_multiple_selected = True
-
-
 class PigeonForm(forms.ModelForm):
-    """
-    Form for adding/editing pigeon listings
-    Supports multiple image uploads (up to 5 images)
-    Main 'image' field = Cover/Thumbnail, 'extra_images' = Gallery
-    """
-    # Add multiple images field (not in model, handled separately)
-    extra_images = forms.FileField(
-        required=False,
-        label='Дополнительные фото (до 5 фото)',
-        help_text='Галерея: выберите до 5 изображений голубя',
-        widget=MultipleFileInput(attrs={
-            'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-            'accept': 'image/*'
-        })
-    )
+    """Simple pigeon form with main image field"""
     
     listing_type = forms.ChoiceField(
-        choices=[('fixed', 'Фиксированная цена (Бесплатно)'), ('auction', 'Аукцион (Стоимость: 3 сомони)')],
-        widget=forms.RadioSelect(attrs={
-            'class': 'listing-type-radio'
-        }),
+        choices=[
+            ('fixed', 'Фиксированная цена (Бесплатно)'),
+            ('auction', 'Аукцион (Стоимость: 3 сомони)')
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'listing-type-radio'}),
         initial='fixed',
         label='Тип размещения'
     )
     
     class Meta:
         model = Pigeon
-        fields = ['title', 'breed', 'game_type', 'sex', 'city', 'price', 'description', 
-                  'image', 'video_url', 'phone', 'whatsapp_number', 'telegram_username', 'is_vip',
-                  'listing_type', 'start_price', 'auction_end_date', 'payment_receipt']
+        fields = [
+            'title', 'breed', 'game_type', 'sex', 'city', 'price', 'description',
+            'image', 'video_url', 'phone', 'whatsapp_number', 'telegram_username', 
+            'is_vip', 'listing_type', 'start_price', 'auction_end_date', 'payment_receipt'
+        ]
         widgets = {
-            'title': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': 'Например: Бойный голубь Тегеранский'
-            }),
-            'breed': forms.Select(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'
-            }),
-            'game_type': forms.Select(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'
-            }),
-            'sex': forms.Select(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'
-            }),
-            'city': forms.Select(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'
-            }),
-            'price': forms.NumberInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': '0.00',
-                'step': '0.01'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'rows': 6,
-                'placeholder': 'Подробное описание птицы, возраст, особенности...'
-            }),
-            'image': forms.FileInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'accept': 'image/*'
-            }),
-            'video_url': forms.URLInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': 'https://www.youtube.com/watch?v=...'
-            }),
-            'phone': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': '+992 XX XXX XX XX'
-            }),
-            'whatsapp_number': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': '+992900123456'
-            }),
-            'telegram_username': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': 'username (без @)'
-            }),
-            'is_vip': forms.CheckboxInput(attrs={
-                'class': 'w-5 h-5 text-[#D4AF37] bg-[#1E1E1E] border-gray-700 rounded focus:ring-[#D4AF37]'
-            }),
-            'start_price': forms.NumberInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'placeholder': 'Начальная цена аукциона',
-                'step': '0.01'
-            }),
-            'auction_end_date': forms.DateTimeInput(attrs={
-                'type': 'datetime-local',
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'
-            }, format='%Y-%m-%dT%H:%M'),
-            'payment_receipt': forms.FileInput(attrs={
-                'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none',
-                'accept': 'image/*'
-            }),
+            'title': forms.TextInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': 'Например: Бойный голубь Тегеранский'}),
+            'image': forms.FileInput(attrs={'class': 'block w-full px-6 py-4 bg-gradient-to-r from-[#1E1E1E] to-[#2A2A2A] border-2 border-[#D4AF37] rounded-xl text-gray-200', 'accept': 'image/*'}),
+            'breed': forms.Select(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'}),
+            'game_type': forms.Select(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'}),
+            'sex': forms.Select(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'}),
+            'city': forms.Select(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'}),
+            'price': forms.NumberInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': '0.00', 'step': '0.01'}),
+            'description': forms.Textarea(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'rows': 6, 'placeholder': 'Подробное описание птицы, возраст, особенности...'}),
+            'video_url': forms.URLInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
+            'phone': forms.TextInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': '+992 XX XXX XX XX'}),
+            'whatsapp_number': forms.TextInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': '+992900123456'}),
+            'telegram_username': forms.TextInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': 'username (без @)'}),
+            'is_vip': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-[#D4AF37] bg-[#1E1E1E] border-gray-700 rounded focus:ring-[#D4AF37]'}),
+            'start_price': forms.NumberInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'placeholder': 'Начальная цена аукциона', 'step': '0.01'}),
+            'auction_end_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none'}, format='%Y-%m-%dT%H:%M'),
+            'payment_receipt': forms.FileInput(attrs={'class': 'w-full px-4 py-3 bg-[#1E1E1E] border border-gray-700 rounded-lg text-gray-200 focus:border-[#D4AF37] focus:outline-none', 'accept': 'image/*'}),
         }
     
     def clean(self):
@@ -115,25 +53,30 @@ class PigeonForm(forms.ModelForm):
         start_price = cleaned_data.get('start_price')
         auction_end_date = cleaned_data.get('auction_end_date')
         payment_receipt = cleaned_data.get('payment_receipt')
+        price = cleaned_data.get('price')
         
         if listing_type == 'auction':
+            # For auctions: price is not required, clear the error
+            if 'price' in self.errors:
+                del self.errors['price']
+            # Set price to 0 for auctions (not used)
+            cleaned_data['price'] = 0
+            
+            # Validate auction-specific fields
             if not start_price:
                 self.add_error('start_price', 'Для аукциона необходимо указать начальную цену')
             if not auction_end_date:
                 self.add_error('auction_end_date', 'Для аукциона необходимо указать дату окончания')
             elif auction_end_date <= timezone.now():
                 self.add_error('auction_end_date', 'Дата окончания должна быть в будущем')
-            if not payment_receipt and not self.instance.pk:  # Only require for new listings
+            if not payment_receipt and not self.instance.pk:
                 self.add_error('payment_receipt', 'Для активации аукциона необходимо загрузить чек оплаты')
+        else:
+            # For fixed price: price is required
+            if not price:
+                self.add_error('price', 'Для объявления необходимо указать цену')
         
         return cleaned_data
-    
-    def clean_extra_images(self):
-        """
-        Validate that no more than 5 extra images are uploaded
-        """
-        # This will be checked in the view since request.FILES.getlist is needed
-        return self.cleaned_data.get('extra_images')
 
 
 class RegisterForm(UserCreationForm):

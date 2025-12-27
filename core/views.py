@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from decimal import Decimal
-from .models import Pigeon, Bid, Comment, UserProfile, Review, PigeonImage
+from .models import Pigeon, Bid, Comment, UserProfile, Review, PigeonImage, HealthGuide
 from .forms import PigeonForm, RegisterForm, BidForm, CommentForm, ReviewForm
 from .utils import send_telegram_message
 
@@ -160,65 +160,59 @@ def pigeon_detail(request, pk):
 @login_required
 def add_pigeon(request):
     """
-    View for adding a new pigeon listing
-    Supports multiple image uploads (up to 5 images)
-    Requires user to be logged in
-    New listings require moderation (is_approved=False by default)
-    For auction listings, payment receipt is required
+    Add new pigeon listing - SIMPLE AND CLEAN
+    - Main photo: form.image (required by model)
+    - Extra photos (0-4): separate file input, saved to PigeonImage
     """
     if request.method == 'POST':
         form = PigeonForm(request.POST, request.FILES)
+        
         if form.is_valid():
-            # Get uploaded extra images (gallery)
-            extra_images = request.FILES.getlist('extra_images')
-            
-            # Validate image count (gallery)
-            if len(extra_images) > 5:
-                messages.error(request, '❌ Можно загрузить максимум 5 дополнительных изображений.')
-                return render(request, 'core/add_pigeon.html', {'form': form})
-            
-            # Note: Main 'image' field is required in model as cover/thumbnail
-            # extra_images are optional gallery photos
-            
+            # Save pigeon
             pigeon = form.save(commit=False)
             pigeon.owner = request.user
-            pigeon.is_approved = False  # Requires moderation
+            pigeon.is_approved = False
             
-            # For auctions, initialize current_price with start_price
+            # For auctions: set current_price = start_price
             if pigeon.listing_type == 'auction' and pigeon.start_price:
                 pigeon.current_price = pigeon.start_price
             
             pigeon.save()
             
-            # Save multiple extra images (gallery)
-            for index, image_file in enumerate(extra_images):
-                PigeonImage.objects.create(
-                    pigeon=pigeon,
-                    image=image_file,
-                    order=index
+            # Handle extra photos (optional, max 4)
+            extra_files = request.FILES.getlist('extra_images')
+            if extra_files:
+                if len(extra_files) > 4:
+                    messages.warning(request, f'⚠️ Можно загрузить максимум 4 дополнительных фото. Загружено первые 4.')
+                    extra_files = extra_files[:4]
+                
+                for index, image_file in enumerate(extra_files):
+                    PigeonImage.objects.create(
+                        pigeon=pigeon,
+                        image=image_file,
+                        order=index
+                    )
+            
+            # Success message
+            photo_count = 1 + len(extra_files) if extra_files else 1
+            if pigeon.listing_type == 'auction':
+                messages.success(
+                    request,
+                    f'✅ Аукцион создан с {photo_count} фото! '
+                    f'После проверки чека оплаты (3 TJS) он будет активирован.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'✅ Объявление создано с {photo_count} фото! '
+                    f'Оно появится на сайте после проверки администратором.'
                 )
             
-            # Different messages for auction vs fixed price
-            gallery_msg = f" + {len(extra_images)} в галерее" if extra_images else ""
-            if pigeon.listing_type == 'auction':
-                messages.success(request, f'✅ Аукцион создан!{gallery_msg} После проверки чека оплаты (3 TJS) он будет активирован.')
-            else:
-                messages.success(request, f'✅ Объявление создано!{gallery_msg} Оно появится на сайте после проверки администратором.')
-            
             return redirect('my_pigeons')
-        else:
-            # Отладка: выводим ошибки формы в консоль
-            print("="*50)
-            print("ОШИБКИ ФОРМЫ:", form.errors)
-            print("="*50)
-            messages.error(request, '❌ Ошибка в форме. Проверьте все поля.')
     else:
         form = PigeonForm()
     
-    context = {
-        'form': form,
-    }
-    return render(request, 'core/add_pigeon.html', context)
+    return render(request, 'core/add_pigeon.html', {'form': form})
 
 
 @login_required
@@ -803,3 +797,37 @@ def custom_500(request):
     return render(request, 'core/500.html', status=500)
 
 
+# =============================================================================
+# 📚 HEALTH ENCYCLOPEDIA: Disease & Treatment Guides
+# =============================================================================
+
+def health_list(request):
+    """
+    Display all health guides (encyclopedia of pigeon diseases and treatment)
+    Shows cards with images and titles in a premium grid layout
+    """
+    guides = HealthGuide.objects.all()
+    
+    context = {
+        'guides': guides,
+    }
+    
+    return render(request, 'core/health_list.html', context)
+
+
+def health_detail(request, slug):
+    """
+    Display detailed health guide with bilingual content (RU/TJ)
+    Includes symptoms, treatment, and optional YouTube video
+    """
+    guide = get_object_or_404(HealthGuide, slug=slug)
+    
+    # Get YouTube embed URL if video exists
+    youtube_embed_url = guide.get_youtube_embed_url()
+    
+    context = {
+        'guide': guide,
+        'youtube_embed_url': youtube_embed_url,
+    }
+    
+    return render(request, 'core/health_detail.html', context)
