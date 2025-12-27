@@ -59,6 +59,9 @@ db.sqlite3-journal
 # Media files (загруженные пользователями)
 media/
 !media/.gitkeep
+!media/health_guides/
+!media/health_guides/*.jpg
+!media/health_guides/*.png
 
 # Static files (собранные)
 staticfiles/
