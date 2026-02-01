@@ -1,0 +1,72 @@
+<!-- Поля для голубей -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Порода голубя -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            🕊️ Порода голубя *
+        </label>
+        <input 
+            type="text" 
+            name="pigeon_breed"
+            required
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Бойный, Николаевский, Статный"
+        >
+    </div>
+    
+    <!-- Стиль игры/бой -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            ⚔️ Стиль игры/бой
+        </label>
+        <input 
+            type="text" 
+            name="game_style"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Столбовой, Ленточный"
+        >
+    </div>
+    
+    <!-- Длительность полета -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            ⏱️ Длительность полета
+        </label>
+        <input 
+            type="text" 
+            name="flight_duration"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 2-3 часа, до 5 часов"
+        >
+    </div>
+    
+    <!-- Пол -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            ⚥ Пол *
+        </label>
+        <select 
+            name="gender_pigeon"
+            required
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+        >
+            <option value="">Выберите пол</option>
+            <option value="male">Самец</option>
+            <option value="female">Самка</option>
+            <option value="pair">Пара</option>
+        </select>
+    </div>
+    
+    <!-- Возраст -->
+    <div class="md:col-span-2">
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            📅 Возраст
+        </label>
+        <input 
+            type="text" 
+            name="age"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 1 год, 6 месяцев"
+        >
+    </div>
+</div>

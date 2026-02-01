@@ -1,0 +1,385 @@
+<!-- HTMX Partial: Динамические поля в зависимости от категории -->
+
+{% if category == 'transport' %}
+<!-- 🚗 ПОЛЯ ДЛЯ ЗОО-ТАКСИ -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">🚗</span> Характеристики транспорта
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Тип авто -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Тип транспорта <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="transport_type" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="sprinter">Спринтер</option>
+                <option value="porter">Портер</option>
+                <option value="sedan">Легковая</option>
+                <option value="minivan">Минивэн</option>
+            </select>
+        </div>
+        
+        <!-- Откуда -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Откуда <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="route_from" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Душанбе, Центр"
+            >
+        </div>
+        
+        <!-- Куда -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Куда <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="route_to" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Худжанд, Рынок"
+            >
+        </div>
+    </div>
+    
+    <div class="bg-blue-900/30 border border-blue-700 rounded-lg p-4 text-blue-200">
+        <p class="text-sm">💡 <strong>Подсказка:</strong> Для транспортных услуг не нужно указывать породу, пол, возраст и вес. Укажите маршрут и тип авто.</p>
+    </div>
+</div>
+
+{% elif category == 'pigeon' %}
+<!-- 🕊️ ПОЛЯ ДЛЯ ГОЛУБЕЙ -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">🕊️</span> Характеристики голубя
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Порода голубя -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Порода голубя <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="pigeon_breed" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Бойный, Статный, Николаевский"
+            >
+        </div>
+        
+        <!-- Пол голубя -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Пол <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="gender_pigeon" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
+                <option value="pair">Пара</option>
+            </select>
+        </div>
+        
+        <!-- Длительность полета -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Длительность полета
+            </label>
+            <input 
+                type="text" 
+                name="flight_duration" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: 2-3 часа, до 5 часов"
+            >
+        </div>
+        
+        <!-- Стиль игры/бой -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Стиль игры/бой
+            </label>
+            <input 
+                type="text" 
+                name="game_style" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Столбовой бой, Ленточный"
+            >
+        </div>
+    </div>
+</div>
+
+{% elif category in 'cow,sheep,horse,goat' %}
+<!-- 🐄 ПОЛЯ ДЛЯ СКОТА -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">
+            {% if category == 'cow' %}🐄
+            {% elif category == 'sheep' %}🐑
+            {% elif category == 'horse' %}🐴
+            {% elif category == 'goat' %}🐐
+            {% endif %}
+        </span> 
+        Характеристики животного
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Порода -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Порода <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="livestock_breed" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Гиссарская, Абердин-ангус, Ахалтекинская"
+            >
+        </div>
+        
+        <!-- Пол -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Пол <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="gender_livestock" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
+            </select>
+        </div>
+        
+        <!-- Вес -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Вес (кг) <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="number" 
+                name="weight" 
+                step="0.01"
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="300"
+            >
+        </div>
+        
+        <!-- Возраст -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Возраст <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="age" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: 2 года, 18 месяцев"
+            >
+        </div>
+    </div>
+</div>
+
+{% elif category in 'dog,cat' %}
+<!-- 🐕 ПОЛЯ ДЛЯ ПИТОМЦЕВ -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">{% if category == 'dog' %}🐕{% else %}🐈{% endif %}</span> 
+        Характеристики питомца
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Порода -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Порода <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="pet_breed" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Британская, Персидская, Немецкая овчарка"
+            >
+        </div>
+        
+        <!-- Пол -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Пол
+            </label>
+            <select 
+                name="gender" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
+                <option value="unknown">Не указано</option>
+            </select>
+        </div>
+        
+        <!-- Возраст -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Возраст
+            </label>
+            <input 
+                type="text" 
+                name="age" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: 1 год, 6 месяцев"
+            >
+        </div>
+        
+        <!-- Паспорт/прививки -->
+        <div>
+            <label class="flex items-center gap-3 p-4 rounded-lg border border-gray-600 bg-[#1E1E1E] cursor-pointer hover:border-[#D4AF37] transition">
+                <input 
+                    type="checkbox" 
+                    name="has_passport"
+                    class="w-5 h-5 text-[#D4AF37] bg-[#1E1E1E] border-gray-600 rounded focus:ring-[#D4AF37]"
+                >
+                <span class="text-sm font-semibold text-gray-300">
+                    ✅ Есть ветеринарный паспорт/прививки
+                </span>
+            </label>
+        </div>
+    </div>
+</div>
+
+{% elif category in 'parrot,bird_other' %}
+<!-- 🦜 ПОЛЯ ДЛЯ ПТИЦ -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">🦜</span> Характеристики птицы
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Вид птицы -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Вид/Порода
+            </label>
+            <input 
+                type="text" 
+                name="pet_breed" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: Жако, Ара, Канарейка"
+            >
+        </div>
+        
+        <!-- Пол -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Пол
+            </label>
+            <select 
+                name="gender" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
+                <option value="pair">Пара</option>
+                <option value="unknown">Не определен</option>
+            </select>
+        </div>
+        
+        <!-- Возраст -->
+        <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Возраст
+            </label>
+            <input 
+                type="text" 
+                name="age" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: 6 месяцев, 2 года"
+            >
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- ОБЩИЕ ПОЛЯ (для остальных категорий) -->
+<div class="space-y-6 animate-fade-in">
+    <h2 class="text-2xl font-bold text-[#D4AF37] mb-4 flex items-center gap-2">
+        <span class="text-3xl">🦁</span> Характеристики животного
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Порода/Вид -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Порода/Вид
+            </label>
+            <input 
+                type="text" 
+                name="breed" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Укажите породу или вид"
+            >
+        </div>
+        
+        <!-- Пол -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Пол
+            </label>
+            <select 
+                name="gender" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+            >
+                <option value="">Выберите...</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
+                <option value="unknown">Не указано</option>
+            </select>
+        </div>
+        
+        <!-- Возраст -->
+        <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                Возраст
+            </label>
+            <input 
+                type="text" 
+                name="age" 
+                class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#1E1E1E] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                placeholder="Например: 1 год, 6 месяцев"
+            >
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
+</style>

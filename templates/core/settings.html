@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Настройки - ГолубБозор{% endblock %}
+{% block title %}Настройки - ЗооБозор{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
@@ -88,7 +88,7 @@
                 <button type="submit" class="flex-1 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
                     💾 Сохранить настройки
                 </button>
-                <a href="{% url 'my_pigeons' %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
+                <a href="{% url 'my_animals' %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
                     Отмена
                 </a>
             </div>
@@ -123,3 +123,4 @@
     </div>
 </div>
 {% endblock %}
+

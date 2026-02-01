@@ -1,59 +1,392 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#D4AF37">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>{% block title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}</title>
+    <title>{% block title %}ЗооБозор - Маркетплейс животных Таджикистана{% endblock %}</title>
     
     <!-- 🔗 Open Graph Meta Tags for WhatsApp/Telegram/Social Previews -->
-    <meta property="og:site_name" content="ГолубБозор">
+    <meta property="og:site_name" content="ЗооБозор">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{% block og_title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Лучшие породистые голуби Таджикистана. VIP объявления, аукционы, проверенные продавцы.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}ЗооБозор - Маркетплейс животных Таджикистана{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Купить и продать животных в Таджикистане: кошки, собаки, голуби, попугаи, лошади, коровы, козы, овцы, кролики. VIP объявления, проверенные продавцы.{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{% static 'img/icon-512.png' %}{% endblock %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     
     <!-- Twitter Card (optional but good for all platforms) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}ГолубБозор - Премиум рынок голубей Таджикистана{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Лучшие породистые голуби Таджикистана{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}ЗооБозор - Маркетплейс животных Таджикистана{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Купить и продать животных в Таджикистане{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/icon-512.png' %}{% endblock %}">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/icon-192.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/icon-192.png' %}">
     
     <!-- PWA Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/icon-192.png' %}">
     <link rel="icon" type="image/png" sizes="512x512" href="{% static 'img/icon-512.png' %}">
     <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS CDN with Custom Configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            DEFAULT: '#D4AF37',
+                            hover: '#B5952F',
+                            light: '#F3E5AB',
+                            dark: '#B8860B',
+                        },
+                        black: {
+                            DEFAULT: '#000000',
+                            soft: '#1A1A1A',
+                            card: '#121212',
+                        },
+                        gray: {
+                            text: '#CCCCCC',
+                            muted: '#666666',
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                        'roboto': ['Roboto', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'slide-in': 'slideIn 0.4s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-gold': 'pulseGold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(0)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        pulseGold: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '.7' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX for Dynamic Content -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- HTMX CSRF Token Fix -->
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Luxury Theme CSS -->
+    <link rel="stylesheet" href="{% static 'css/luxury.css' %}">
     
     <style>
+        /* ========================================
+           🎨 ZOOBOZOR LUXURY THEME (Black & Gold)
+           ======================================== */
+        
+        /* GLOBAL TYPOGRAPHY */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            color: #E5E7EB;
+            background-color: #000000;
         }
+        
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'Playfair Display', serif;
+            color: #D4AF37;
+            font-weight: 700;
         }
-        .gold-text {
+        
+        a {
+            color: #D4AF37;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        
+        a:hover {
+            color: #FFD700;
+        }
+        
+        nav a {
+            color: #F3F4F6;
+        }
+        
+        nav a:hover,
+        nav a.active {
             color: #D4AF37;
         }
-        .gold-border {
-            border-color: #D4AF37;
+        
+        /* ========================================
+           BUTTONS (Premium Gold Style)
+           ======================================== */
+        .btn-gold {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4BF47 100%);
+            color: #000000;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(212, 175, 55, 0.3);
         }
-        .gold-bg {
-            background-color: #D4AF37;
+        
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #C5A028 0%, #E5B038 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.5);
+        }
+        
+        .btn-gold:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-gold:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #000;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+            transform: scale(1.05);
+        }
+        
+        /* ========================================
+           INPUT FIELDS (Dark Luxury)
+           ======================================== */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="tel"],
+        input[type="url"],
+        textarea,
+        select {
+            background-color: #1A1A1A;
+            border: 1px solid #333333;
+            color: #FFFFFF;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            background-color: #121212;
+        }
+        
+        input::placeholder,
+        textarea::placeholder {
+            color: #666666;
+        }
+        
+        /* ========================================
+           CARDS (Glassmorphism & Matte Black)
+           ======================================== */
+        .card-glass {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card-glass:hover {
+            transform: scale(1.05);
+            border-color: rgba(212, 175, 55, 0.5);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+        
+        .card-matte {
+            background-color: #121212;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card-matte:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                        0 0 20px rgba(212, 175, 55, 0.2);
+        }
+        
+        /* ========================================
+           TOAST NOTIFICATIONS (Modern Style)
+           ======================================== */
+        .toast-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid;
+            border-radius: 0.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: slideInRight 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .toast.success {
+            border-left-color: #10B981;
+        }
+        
+        .toast.error {
+            border-left-color: #EF4444;
+        }
+        
+        .toast.warning {
+            border-left-color: #F59E0B;
+        }
+        
+        .toast.info {
+            border-left-color: #3B82F6;
+        }
+        
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .toast-message {
+            color: #FFFFFF;
+            flex: 1;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #999999;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        
+        .toast-close:hover {
+            color: #FFFFFF;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Utility Classes */
+        .gold-text { color: #D4AF37; }
+        .gold-border { border-color: #D4AF37; }
+        .gold-bg { background-color: #D4AF37; }
+        .text-shadow-gold { text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); }
+        
+        /* 🎉 ПРАЗДНИЧНЫЕ СТИЛИ */
+        .holiday-decoration {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Рамадан - мерцающие звезды */
+        .theme-ramadan::before {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            left: 5%;
+            animation: twinkle 2s infinite;
+            opacity: 0.7;
+        }
+        
+        .theme-ramadan::after {
+            content: '⭐';
+            position: absolute;
+            top: 15px;
+            right: 5%;
+            animation: twinkle 2.5s infinite;
+            opacity: 0.6;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* Навруз - весенняя анимация */
+        .theme-navruz {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+        }
+        
+        /* Новый Год - снежинки */
+        .theme-newyear {
+            background: linear-gradient(180deg, rgba(30, 30, 30, 0.95) 0%, rgba(18, 18, 18, 0.9) 100%);
+        }
+        
+        /* Ид - праздничное сияние */
+        .theme-eid {
+            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
         }
         
         /* Winter Garland - Новогодняя гирлянда */
@@ -115,6 +448,18 @@
                 filter: brightness(0.8) contrast(0.9);
                 opacity: 0.85;
             }
+        }
+        
+        /* HTMX Loading Indicator */
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: block;
+        }
+        .htmx-request.htmx-indicator {
+            display: block;
+        }
             75% {
                 filter: brightness(1.3) contrast(1.1);
                 opacity: 0.95;
@@ -141,8 +486,8 @@
             <!-- Close Button -->
             <div class="flex justify-between items-center mb-8">
                 <div class="flex items-center space-x-2">
-                    <span class="text-2xl">🕊️</span>
-                    <span class="text-2xl font-bold gold-text">ГолубБозор</span>
+                    <span class="text-2xl">🦁</span>
+                    <span class="text-2xl font-bold gold-text">ЗооБозор</span>
                 </div>
                 <button id="mobile-menu-close" onclick="document.getElementById('mobile-menu-btn').click()" class="text-gray-400 hover:text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,13 +502,10 @@
                     <a href="{% url 'home' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">🏠</span> Главная
                     </a>
-                    <a href="{% url 'health_list' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
-                        <span class="text-xl mr-2">📚</span> Энциклопедия лечения
-                    </a>
-                    <a href="{% url 'add_pigeon' %}" class="block px-4 py-3 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#C5A028] transition">
+                    <a href="{% url 'add_animal' %}" class="block px-4 py-3 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#C5A028] transition">
                         <span class="text-xl mr-2">➕</span> Добавить объявление
                     </a>
-                    <a href="{% url 'my_pigeons' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
+                    <a href="{% url 'my_animals' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">📋</span> Мои объявления
                     </a>
                     <a href="{% url 'favorites' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
@@ -198,9 +540,6 @@
                     <a href="{% url 'home' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">🏠</span> Главная
                     </a>
-                    <a href="{% url 'health_list' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
-                        <span class="text-xl mr-2">📚</span> Энциклопедия лечения
-                    </a>
                     <a href="{% url 'login' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">🔐</span> Вход
                     </a>
@@ -225,8 +564,8 @@
                 
                 <!-- Logo -->
                 <a href="{% url 'home' %}" class="flex items-center space-x-2">
-                    <span class="text-2xl">🕊️</span>
-                    <span class="text-xl md:text-2xl font-bold gold-text">ГолубБозор</span>
+                    <span class="text-2xl">🦁</span>
+                    <span class="text-xl md:text-2xl font-bold gold-text">ЗооБозор</span>
                 </a>
                 
                 <!-- Search Bar (Desktop) -->
@@ -249,40 +588,38 @@
                 
                 <!-- Desktop Navigation Links -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="{% url 'health_list' %}" class="text-gray-300 hover:text-[#D4AF37] transition flex items-center gap-1" title="Энциклопедия лечения">
-                        📚 <span class="hidden lg:inline">Лечение</span>
-                    </a>
+                    
                     {% if user.is_authenticated %}
-                        <a href="{% url 'add_pigeon' %}" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
-                            + Добавить
+                        <a href="{% url 'add_animal' %}" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition">
+                            + {% trans "Добавить" %}
                         </a>
-                        <a href="{% url 'favorites' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="Избранное">
+                        <a href="{% url 'favorites' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="{% trans 'Избранное' %}">
                             ❤️
                         </a>
-                        <a href="{% url 'my_pigeons' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
-                            Мои объявления
+                        <a href="{% url 'my_animals' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
+                            {% trans "Мои объявления" %}
                         </a>
                         {% if user.is_staff %}
                         <a href="{% url 'manager_dashboard' %}" class="px-3 py-2 bg-red-900/30 border border-red-700 text-red-400 rounded-lg hover:bg-red-900/50 transition font-semibold" title="Manager Dashboard">
                             🛡️ Dashboard
                         </a>
                         {% endif %}
-                        <a href="{% url 'user_settings' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="Настройки">
+                        <a href="{% url 'user_settings' %}" class="text-gray-300 hover:text-[#D4AF37] transition" title="{% trans 'Настройки' %}">
                             ⚙️
                         </a>
                         <span class="text-gray-400">{{ user.username }}</span>
                         <form method="post" action="{% url 'logout' %}" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-gray-300 hover:text-[#D4AF37] transition">
-                                Выход
+                                {% trans "Выход" %}
                             </button>
                         </form>
                     {% else %}
                         <a href="{% url 'login' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
-                            Вход
+                            {% trans "Вход" %}
                         </a>
                         <a href="{% url 'register' %}" class="px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
-                            Регистрация
+                            {% trans "Регистрация" %}
                         </a>
                     {% endif %}
                 </div>
@@ -309,7 +646,111 @@
                 </button>
             </form>
         </div>
+        
+        <!-- Desktop Menu (остальной код) -->
+                
+                {% if user.is_authenticated %}
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'add_animal' %}" class="px-4 py-2 bg-[#D4AF37] text-black rounded-lg font-semibold hover:bg-[#C5A028] transition">
+                        Добавить объявление
+                    </a>
+                    <a href="{% url 'favorites' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
+                        <span class="text-2xl">❤️</span>
+                    </a>
+                    <a href="{% url 'user_settings' %}" class="text-gray-300 hover:text-[#D4AF37] transition">
+                        <span class="text-2xl">⚙️</span>
+                    </a>
+                    <form method="post" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-4 py-2 border border-gray-700 rounded-lg text-gray-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition">
+                            Выход
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'login' %}" class="px-4 py-2 border border-gray-700 rounded-lg text-gray-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition">
+                        Вход
+                    </a>
+                    <a href="{% url 'register' %}" class="px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] rounded-lg font-semibold hover:bg-[#D4AF37] hover:text-black transition">
+                        Регистрация
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </nav>
+    
+    <!-- 🎉 ПРАЗДНИЧНЫЕ ДЕКОРАЦИИ -->
+    {% if holiday_theme %}
+    <div class="holiday-decoration {{ holiday_theme }} py-4 bg-gradient-to-b from-[#1E1E1E] to-[#121212]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            {% if holiday_theme == 'theme-ramadan' %}
+            <!-- Рамадан: Луна и фонарики -->
+            <div class="flex items-center justify-center gap-4 text-2xl animate-pulse">
+                <span class="text-4xl">🌙</span>
+                <span class="text-[#D4AF37] font-semibold">{{ holiday_emoji }} {{ holiday_name }} Мубарак!</span>
+                <span class="text-3xl">🏮</span>
+                <span class="text-3xl">🕌</span>
+                <span class="text-3xl">🏮</span>
+            </div>
+            <div class="flex justify-center gap-6 mt-2 text-xl opacity-70">
+                <span>✨</span>
+                <span>🌟</span>
+                <span>⭐</span>
+                <span>🌟</span>
+                <span>✨</span>
+            </div>
+            
+            {% elif holiday_theme == 'theme-eid' %}
+            <!-- Иди Рамазан -->
+            <div class="flex items-center justify-center gap-4 text-2xl">
+                <span class="text-4xl">✨</span>
+                <span class="text-[#D4AF37] font-semibold">{{ holiday_emoji }} {{ holiday_name }} Мубарак!</span>
+                <span class="text-3xl">🎊</span>
+                <span class="text-3xl">🎉</span>
+                <span class="text-3xl">🎊</span>
+            </div>
+            
+            {% elif holiday_theme == 'theme-navruz' %}
+            <!-- Навруз: Весенние узоры -->
+            <div class="flex items-center justify-center gap-4 text-2xl">
+                <span class="text-4xl">🌸</span>
+                <span class="text-[#D4AF37] font-semibold">{{ holiday_emoji }} {{ holiday_name }} Мубарак!</span>
+                <span class="text-3xl">🌺</span>
+                <span class="text-3xl">🌼</span>
+                <span class="text-3xl">🌻</span>
+            </div>
+            <div class="flex justify-center gap-4 mt-2 text-sm text-gray-400">
+                <span>Суманак</span>
+                <span>•</span>
+                <span>Саманӯ</span>
+                <span>•</span>
+                <span>Хафт Син</span>
+            </div>
+            
+            {% elif holiday_theme == 'theme-newyear' %}
+            <!-- Новый Год: Ёлка и гирлянда -->
+            <div class="flex items-center justify-center gap-4 text-2xl">
+                <span class="text-4xl">🎄</span>
+                <span class="text-[#D4AF37] font-semibold">{{ holiday_emoji }} С Новым Годом!</span>
+                <span class="text-3xl">🎅</span>
+                <span class="text-3xl">⛄</span>
+                <span class="text-3xl">🎁</span>
+            </div>
+            <div class="flex justify-center gap-3 mt-2 text-2xl animate-bounce">
+                <span>🔴</span>
+                <span>🟢</span>
+                <span>🔵</span>
+                <span>🟡</span>
+                <span>🔴</span>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Messages -->
     {% if messages %}
@@ -335,11 +776,11 @@
                 <!-- About -->
                 <div class="text-center md:text-left">
                     <div class="flex items-center justify-center md:justify-start space-x-2 mb-4">
-                        <span class="text-3xl">🕊️</span>
-                        <span class="text-2xl font-bold gold-text">ГолубБозор</span>
+                        <span class="text-3xl">🦁</span>
+                        <span class="text-2xl font-bold gold-text">ЗооБозор</span>
                     </div>
                     <p class="text-gray-400 text-sm">
-                        Премиум маркетплейс для покупки и продажи породистых голубей в Таджикистане
+                        Премиум маркетплейс для покупки и продажи животных в Таджикистане
                     </p>
                 </div>
                 
@@ -391,7 +832,7 @@
             <!-- Copyright -->
             <div class="border-t border-gray-800 pt-6 text-center">
                 <p class="text-gray-400">
-                    &copy; 2025 <span class="gold-text font-semibold">ГолубБозор</span> - Премиум маркетплейс голубей Таджикистана
+                    &copy; 2025-2026 <span class="gold-text font-semibold">ЗооБозор</span> - Маркетплейс животных Таджикистана
                 </p>
                 <p class="text-gray-500 text-sm mt-2">
                     🏙️ Душанбе, Таджикистан | 📧 Все права защищены
@@ -402,6 +843,86 @@
     
     <!-- CSRF Token for AJAX -->
     {% csrf_token %}
+    
+    <!-- Django Messages as Luxury Toasts -->
+    {% if messages %}
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-3">
+        {% for message in messages %}
+        <div class="toast {% if message.tags == 'success' %}toast-success{% elif message.tags == 'error' %}toast-error{% elif message.tags == 'warning' %}toast-warning{% else %}toast-info{% endif %}" role="alert">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'success' %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    {% elif message.tags == 'error' %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    {% elif message.tags == 'warning' %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    {% else %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 opacity-70 hover:opacity-100 transition">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- ЗАДАЧА 2: PWA Install Banner (Умный баннер установки) -->
+    <div id="pwa-install-banner" class="hidden fixed bottom-0 left-0 w-full z-50 bg-black/95 backdrop-blur-sm border-t-2 border-[#D4AF37] shadow-2xl">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+            <!-- App Icon -->
+            <div class="flex-shrink-0">
+                <img src="{% static 'img/icon-192.png' %}" alt="ZooBozor" class="w-14 h-14 rounded-xl shadow-lg">
+            </div>
+            
+            <!-- Text Content -->
+            <div class="flex-1 banner-text">
+                <p class="text-white font-semibold text-base">Установите ZooBozor</p>
+                <p class="text-gray-400 text-sm">Для быстрого доступа к маркетплейсу животных</p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-2 flex-shrink-0">
+                <button id="pwa-install-btn" class="px-5 py-2.5 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition-all transform hover:scale-105 active:scale-95 shadow-lg">
+                    <span class="btn-text">Установить</span>
+                </button>
+                <button id="pwa-dismiss-btn" class="px-3 py-2.5 text-gray-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-remove toasts after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.animation = 'fadeOut 0.4s ease-in forwards';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3000);
+            });
+        });
+    </script>
+    {% endif %}
     
     <!-- Main JavaScript -->
     {% load static %}
@@ -420,21 +941,47 @@
                     });
             });
         }
-        
-        // PWA Install Prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            console.log('💡 PWA install prompt available');
+    </script>
+    
+    <!-- ЗАДАЧА 2 & 3: PWA Installation Logic (Smart Banner + JS Logic) -->
+    <script src="{% static 'js/pwa-install.js' %}"></script>
+    
+    <!-- ЗАДАЧА 2: Advanced App Banner & Language Switcher Enhancement -->
+    <script src="{% static 'js/app-banner.js' %}"></script>
+    
+    <!-- Mobile menu functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const menuOverlay = document.getElementById('menu-overlay');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    const menu = document.getElementById('mobile-menu');
+                    menu.classList.toggle('-translate-x-full');
+                    menuOverlay.classList.toggle('hidden');
+                });
+                
+                if (menuOverlay) {
+                    menuOverlay.addEventListener('click', function() {
+                        const menu = document.getElementById('mobile-menu');
+                        menu.classList.add('-translate-x-full');
+                        menuOverlay.classList.add('hidden');
+                    });
+                }
+            }
             
-            // Show custom install button if you create one
-            // document.getElementById('install-btn')?.classList.remove('hidden');
-        });
-        
-        window.addEventListener('appinstalled', () => {
-            console.log('✅ PWA installed successfully!');
-            deferredPrompt = null;
+            // Close mobile menu when clicking a link
+            const mobileLinks = mobileMenu ? mobileMenu.querySelectorAll('a, button[type="submit"]') : [];
+            mobileLinks.forEach(link => {
+                if (!link.id) {  // Skip close button
+                    link.addEventListener('click', function() {
+                        const menu = document.getElementById('mobile-menu');
+                        menu.classList.add('-translate-x-full');
+                        menuOverlay.classList.add('hidden');
+                    });
+                }
+            });
         });
     </script>
     

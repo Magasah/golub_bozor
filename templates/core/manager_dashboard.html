@@ -95,36 +95,36 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-800">
-                {% for pigeon in pending_payments %}
+                {% for animal in pending_payments %}
                 <tr class="hover:bg-[#0a0a0a]/50 transition">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-mono text-gray-400">#{{ pigeon.id }}</span>
+                        <span class="text-sm font-mono text-gray-400">#{{ animal.id }}</span>
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex items-center">
-                            <img src="{{ pigeon.image.url }}" alt="{{ pigeon.title }}" class="w-12 h-12 rounded-lg object-cover mr-3">
+                            <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-12 h-12 rounded-lg object-cover mr-3">
                             <div>
-                                <div class="text-sm font-semibold text-gray-200">{{ pigeon.title|truncatewords:5 }}</div>
-                                <div class="text-xs text-gray-500">Стартовая: {{ pigeon.start_price }} TJS</div>
+                                <div class="text-sm font-semibold text-gray-200">{{ animal.title|truncatewords:5 }}</div>
+                                <div class="text-xs text-gray-500">Стартовая: {{ animal.start_price }} TJS</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-black font-bold text-sm mr-2">
-                                {{ pigeon.owner.username|slice:":1"|upper }}
+                                {{ animal.owner.username|slice:":1"|upper }}
                             </div>
                             <div>
-                                <div class="text-sm font-medium text-gray-200">{{ pigeon.owner.username }}</div>
-                                <div class="text-xs text-gray-500">{{ pigeon.owner.email }}</div>
+                                <div class="text-sm font-medium text-gray-200">{{ animal.owner.username }}</div>
+                                <div class="text-xs text-gray-500">{{ animal.owner.email }}</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        {% if pigeon.payment_receipt %}
-                        <a href="{{ pigeon.payment_receipt.url }}" target="_blank" class="block group">
+                        {% if animal.payment_receipt %}
+                        <a href="{{ animal.payment_receipt.url }}" target="_blank" class="block group">
                             <img 
-                                src="{{ pigeon.payment_receipt.url }}" 
+                                src="{{ animal.payment_receipt.url }}" 
                                 alt="Receipt" 
                                 class="w-20 h-20 object-cover rounded-lg border-2 border-gray-700 group-hover:border-[#D4AF37] transition cursor-zoom-in"
                             >
@@ -135,17 +135,17 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-300">{{ pigeon.created_at|date:"d.m.Y" }}</div>
-                        <div class="text-xs text-gray-500">{{ pigeon.created_at|date:"H:i" }}</div>
+                        <div class="text-sm text-gray-300">{{ animal.created_at|date:"d.m.Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ animal.created_at|date:"H:i" }}</div>
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex gap-2">
                             <!-- Approve Button -->
-                            <form method="POST" action="{% url 'approve_payment' pigeon.id %}" class="inline">
+                            <form method="POST" action="{% url 'approve_payment' animal.id %}" class="inline">
                                 {% csrf_token %}
                                 <button 
                                     type="submit"
-                                    onclick="return confirm('Подтвердить оплату для аукциона \"{{ pigeon.title }}\"?')"
+                                    onclick="return confirm('Подтвердить оплату для аукциона \"{{ animal.title }}\"?')"
                                     class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition flex items-center gap-2"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -156,11 +156,11 @@
                             </form>
                             
                             <!-- Reject Button -->
-                            <form method="POST" action="{% url 'reject_payment' pigeon.id %}" class="inline">
+                            <form method="POST" action="{% url 'reject_payment' animal.id %}" class="inline">
                                 {% csrf_token %}
                                 <button 
                                     type="submit"
-                                    onclick="return confirm('Отклонить оплату для аукциона \"{{ pigeon.title }}\"? Пользователь будет уведомлен.')"
+                                    onclick="return confirm('Отклонить оплату для аукциона \"{{ animal.title }}\"? Пользователь будет уведомлен.')"
                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition flex items-center gap-2"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,3 +201,4 @@
 </div>
 
 {% endblock %}
+

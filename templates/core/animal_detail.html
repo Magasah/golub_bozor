@@ -1,0 +1,1153 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ animal.title }} - ЗооБозор{% endblock %}
+
+<!-- 🔗 animal-specific Open Graph tags for rich social previews -->
+{% block og_title %}{{ animal.title }} — {% if animal.listing_type == 'auction' %}{{ animal.current_price }}{% else %}{{ animal.price }}{% endif %} TJS | ЗооБозор{% endblock %}
+
+{% block og_description %}Продается животное в {{ animal.city }}. {% if animal.breed %}Порода: {{ animal.breed }}.{% endif %} {% if animal.listing_type == 'auction' %}Аукцион{% else %}Прямая продажа{% endif %}. Заходи на ZooBozor!{% endblock %}
+
+{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{{ animal.main_photo.url }}{% endblock %}
+
+{% block twitter_title %}{{ animal.title }} — {% if animal.listing_type == 'auction' %}{{ animal.current_price }}{% else %}{{ animal.price }}{% endif %} TJS{% endblock %}
+
+{% block twitter_description %}{{ animal.get_breed_display }} • {{ animal.location }} • {% if animal.listing_type == 'auction' %}Аукцион{% else %}Продажа{% endif %}{% endblock %}
+
+{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{{ animal.main_photo.url }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="mb-6 flex flex-wrap items-center justify-between">
+    <div>
+        <a href="{% url 'home' %}" class="text-[#D4AF37] hover:underline">Главная</a>
+        <span class="text-gray-600 mx-2">/</span>
+        <span class="text-gray-400">{{ animal.title }}</span>
+    </div>
+    
+    <!-- Views Counter -->
+    <div class="flex items-center text-gray-400 text-sm mt-2 md:mt-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        {{ animal.views_count }} просмотр{{ animal.views_count|pluralize:",а,ов" }}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column - Media & Details -->
+    <div class="lg:col-span-2">
+        <!-- VIP Badge -->
+        {% if animal.is_vip %}
+        <div class="bg-[#D4AF37] text-black text-center py-3 font-bold text-lg rounded-t-lg">
+            ⭐ VIP ОБЪЯВЛЕНИЕ ⭐
+        </div>
+        {% endif %}
+        
+        <!-- Main Image with Lightbox -->
+        <div class="{% if animal.is_vip %}border-4 border-[#D4AF37]{% else %}border border-gray-800{% endif %} rounded-lg overflow-hidden mb-6" data-aos="zoom-in">
+            <img 
+                id="mainImage"
+                src="{{ animal.main_photo.url }}" 
+                alt="{{ animal.title }}"
+                class="w-full h-auto cursor-zoom-in hover:opacity-90 transition"
+                onclick="openLightbox(0)"
+            >
+        </div>
+        
+        <!-- Gallery Thumbnails -->
+        {% if animal.gallery.all %}
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-300 mb-3">📸 Все фото ({{ animal.gallery.count|add:1 }})</h3>
+            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                <!-- Main photo thumbnail -->
+                <div class="relative aspect-square rounded-lg overflow-hidden border-2 border-[#D4AF37] cursor-pointer hover:opacity-75 transition" onclick="openLightbox(0)">
+                    <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">Главное</span>
+                    </div>
+                </div>
+                
+                <!-- Additional photos -->
+                {% for image in animal.gallery.all %}
+                <div class="relative aspect-square rounded-lg overflow-hidden border border-gray-700 cursor-pointer hover:border-[#D4AF37] hover:opacity-75 transition" onclick="openLightbox({{ forloop.counter }})">
+                    <img src="{{ image.image.url }}" alt="{{ animal.title }}" class="w-full h-full object-cover">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons (Favorite & WhatsApp Share) -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <!-- Favorite Button with HTMX -->
+            {% if user.is_authenticated %}
+            <div id="favorite-btn-{{ animal.pk }}">
+                {% include 'core/partials/favorite_button.html' with animal=animal is_favorite=is_favorite %}
+            </div>
+            {% else %}
+            <a 
+                href="{% url 'login' %}?next={{ request.path }}"
+                class="flex items-center justify-center px-4 py-3 border-2 border-gray-700 text-gray-300 rounded-lg font-semibold hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 transition"
+            >
+                <span class="flex">🤍</span>
+                <span class="ml-2">В избранное</span>
+            </a>
+            {% endif %}
+            
+            <!-- WhatsApp Share Button -->
+            <a 
+                href="https://wa.me/?text=Салам!%20Зацени%20это%20объявление:%20{{ animal.title|urlencode }}%20за%20{% if animal.listing_type == 'auction' %}{{ animal.current_price }}{% else %}{{ animal.price }}{% endif %}%20TJS.%20Ссылка:%20{{ request.build_absolute_uri }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition shadow-lg hover:shadow-xl"
+            >
+                <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Поделиться в WhatsApp
+            </a>
+        </div>
+        
+        <!-- animal Details Grid -->
+        <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 mb-6">
+            <h2 class="text-2xl font-bold mb-4 gold-text">📋 Характеристики</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% if animal.breed %}
+                <div class="bg-[#121212] p-4 rounded-lg">
+                    <p class="text-gray-500 text-sm mb-1">Порода</p>
+                    <p class="text-gray-200 font-semibold text-lg">{{ animal.breed }}</p>
+                </div>
+                {% endif %}
+                {% if animal.gender %}
+                <div class="bg-[#121212] p-4 rounded-lg">
+                    <p class="text-gray-500 text-sm mb-1">Пол</p>
+                    <p class="text-gray-200 font-semibold text-lg">{{ animal.get_gender_display }}</p>
+                </div>
+                {% endif %}
+                <div class="bg-[#121212] p-4 rounded-lg">
+                    <p class="text-gray-500 text-sm mb-1">🏙️ Город</p>
+                    <p class="text-gray-200 font-semibold text-lg">{{ animal.get_city_display }}</p>
+                </div>
+                {% if animal.age %}
+                <div class="bg-[#121212] p-4 rounded-lg">
+                    <p class="text-gray-500 text-sm mb-1">Возраст</p>
+                    <p class="text-gray-200 font-semibold text-lg">{{ animal.age }}</p>
+                </div>
+                {% endif %}
+                <div class="bg-[#121212] p-4 rounded-lg">
+                    <p class="text-gray-500 text-sm mb-1">Категория</p>
+                    <p class="text-gray-200 font-semibold text-lg">{{ animal.get_category_display }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Section with Smart Button -->
+        {% if animal.video_url %}
+        <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 mb-6">
+            <h2 class="text-2xl font-bold mb-4 gold-text">🎥 Видео</h2>
+            
+            <!-- Embedded Video Player -->
+            <div class="w-full aspect-video rounded-lg overflow-hidden mb-4 bg-black">
+                <iframe 
+                    id="video-player"
+                    class="w-full h-full"
+                    src=""
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                ></iframe>
+            </div>
+            
+            <!-- Video platform hint -->
+            <div class="text-center text-xs text-gray-500">
+                {% if 'youtube' in animal.video_url or 'youtu.be' in animal.video_url %}
+                    <span class="inline-flex items-center">
+                        <svg class="h-4 w-4 mr-1 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        YouTube
+                    </span>
+                {% else %}
+                    <span>Внешняя ссылка</span>
+                {% endif %}
+            </div>
+            
+            <script>
+                // Smart video URL converter
+                (function() {
+                    const videoUrl = "{{ animal.video_url }}";
+                    const player = document.getElementById('video-player');
+                    
+                    let embedUrl = '';
+                    
+                    // YouTube URL conversion
+                    if (videoUrl.includes('youtube.com/watch?v=')) {
+                        const videoId = videoUrl.split('v=')[1].split('&')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    } else if (videoUrl.includes('youtu.be/')) {
+                        const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    } 
+                    // TikTok URL conversion
+                    else if (videoUrl.includes('tiktok.com')) {
+                        const videoId = videoUrl.split('/video/')[1]?.split('?')[0];
+                        if (videoId) {
+                            embedUrl = `https://www.tiktok.com/embed/v2/${videoId}`;
+                        }
+                    }
+                    // Direct embed URL
+                    else if (videoUrl.includes('/embed/')) {
+                        embedUrl = videoUrl;
+                    }
+                    // Fallback: try as-is
+                    else {
+                        embedUrl = videoUrl;
+                    }
+                    
+                    player.src = embedUrl;
+                })();
+            </script>
+        </div>
+        {% endif %}
+        
+        <!-- Description -->
+        <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800">
+            <h2 class="text-2xl font-bold mb-4 gold-text">📝 Описание</h2>
+            <p class="text-gray-300 leading-relaxed whitespace-pre-line">{{ animal.description }}</p>
+        </div>
+    </div>
+    
+    <!-- Right Column - Price & Contact -->
+    <div class="lg:col-span-1">
+        <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 sticky top-20">
+            
+            {% if animal.listing_type == 'auction' %}
+                <!-- ==================== AUCTION MODE ==================== -->
+                <div class="mb-6 pb-6 border-b border-[#D4AF37]">
+                    <!-- Auction Badge -->
+                    <div class="bg-gradient-to-r from-[#D4AF37] to-[#F4BF47] text-black text-center py-3 rounded-lg mb-6 font-bold text-lg shadow-lg animate-pulse">
+                        🔨 ЖИВОЙ АУКЦИОН 🔨
+                    </div>
+                    
+                    <!-- Current Highest Bid -->
+                    <div class="text-center mb-6">
+                        <p class="text-gray-400 text-sm uppercase tracking-wider mb-2">Текущая Ставка</p>
+                        <p class="text-5xl md:text-6xl font-black gold-text leading-none" style="text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);">
+                            {{ animal.current_price|default:animal.start_price }}
+                        </p>
+                        <p class="text-[#D4AF37] text-2xl font-bold mt-2">TJS</p>
+                    </div>
+                    
+                    <!-- Countdown Timer -->
+                    <div class="bg-[#121212] rounded-lg p-4 mb-6 border border-[#D4AF37]">
+                        <p class="text-gray-400 text-xs uppercase text-center mb-3">Окончание через:</p>
+                        <div id="countdown-timer" class="grid grid-cols-4 gap-2 text-center" data-end="{{ animal.auction_end_date|date:'c' }}">
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="days">00</div>
+                                <div class="text-xs text-gray-500 mt-1">ДНЕЙ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="hours">00</div>
+                                <div class="text-xs text-gray-500 mt-1">ЧАСОВ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="minutes">00</div>
+                                <div class="text-xs text-gray-500 mt-1">МИНУТ</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black gold-text" id="seconds">00</div>
+                                <div class="text-xs text-gray-500 mt-1">СЕКУНД</div>
+                            </div>
+                        </div>
+                        <div id="auction-status" class="text-center mt-3 hidden">
+                            <span class="text-red-500 font-bold text-lg">⏰ АУКЦИОН ЗАВЕРШЁН</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Auction Info Grid -->
+                    <div class="space-y-2 text-sm mb-6">
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Начальная цена:</span>
+                            <span class="text-gray-200 font-semibold">{{ animal.start_price }} TJS</span>
+                        </div>
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Всего ставок:</span>
+                            <span class="text-[#D4AF37] font-bold">{{ animal.get_bid_count }}</span>
+                        </div>
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">Статус:</span>
+                            {% if animal.is_auction_active %}
+                                <span class="text-green-500 font-semibold flex items-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                    Активен
+                                </span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">Завершён</span>
+                            {% endif %}
+                        </div>
+                        {% if animal.winner and not animal.is_auction_active %}
+                        <div class="flex justify-between bg-[#121212] p-3 rounded">
+                            <span class="text-gray-500">🏆 Победитель:</span>
+                            <span class="text-[#D4AF37] font-bold">{{ animal.winner.username }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- BID FORM - Only show if user is authenticated, not owner, and auction is active -->
+                    {% if user.is_authenticated and animal.is_auction_active and user != animal.owner %}
+                    <div id="bid-form-container" class="p-5 bg-gradient-to-br from-[#121212] to-[#1A1A1A] rounded-xl border-2 border-[#D4AF37] shadow-xl">
+                        <h4 class="text-xl font-bold mb-4 text-[#D4AF37] flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                            </svg>
+                            Сделать ставку
+                        </h4>
+                        <form method="post" action="{% url 'place_bid' animal.pk %}" id="bid-form">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="block text-gray-300 text-sm font-semibold mb-2">
+                                    Ваша ставка (TJS)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    name="amount" 
+                                    step="0.01" 
+                                    min="{{ animal.current_price|default:animal.start_price|add:1 }}"
+                                    class="w-full px-4 py-3 bg-[#0A0A0A] border-2 border-[#D4AF37] rounded-lg text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent"
+                                    placeholder="Введите сумму"
+                                    required
+                                >
+                                {% if bid_form.amount.help_text %}
+                                <p class="text-gray-400 text-xs mt-2 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ bid_form.amount.help_text }}
+                                </p>
+                                {% endif %}
+                                {% if bid_form.amount.errors %}
+                                <p class="text-red-400 text-sm mt-2">{{ bid_form.amount.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <button 
+                                type="submit" 
+                                id="bid-submit-btn"
+                                class="w-full px-6 py-4 bg-gradient-to-r from-[#D4AF37] to-[#F4BF47] text-black font-black text-lg rounded-lg hover:from-[#C5A028] hover:to-[#E5B038] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
+                            >
+                                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                СДЕЛАТЬ СТАВКУ
+                            </button>
+                        </form>
+                    </div>
+                    {% elif not user.is_authenticated and animal.is_auction_active %}
+                    <!-- Not logged in -->
+                    <div class="p-6 bg-[#121212] rounded-xl border-2 border-gray-700 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-gray-400 mb-4 text-lg">Войдите, чтобы делать ставки</p>
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="inline-block px-8 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition transform hover:scale-105">
+                            Войти
+                        </a>
+                    </div>
+                    {% elif user == animal.owner and animal.is_auction_active %}
+                    <!-- Owner can't bid -->
+                    <div class="p-6 bg-[#121212] rounded-xl border-2 border-gray-700 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-gray-400 text-lg">Вы не можете делать ставки на свой аукцион</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- BID HISTORY -->
+                {% if bids %}
+                <div class="mb-6 pb-6 border-b border-gray-700">
+                    <h3 class="text-xl font-bold mb-4 text-gray-200 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-[#D4AF37]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        История ставок ({{ bids|length }})
+                    </h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                        {% for bid in bids %}
+                        <div class="flex justify-between items-center p-3 bg-[#121212] rounded-lg border border-gray-800 hover:border-[#D4AF37] transition">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#C5A028] rounded-full flex items-center justify-center text-black font-bold mr-3">
+                                    {{ bid.user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <p class="text-gray-200 font-semibold">{{ bid.user.username }}</p>
+                                    <p class="text-gray-500 text-xs">{{ bid.created_at|timesince }} назад</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[#D4AF37] font-black text-xl">{{ bid.amount }}</p>
+                                <p class="text-gray-400 text-xs">TJS</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <!-- ==================== FIXED PRICE MODE ==================== -->
+                <!-- FIXED PRICE MODE -->
+                <div class="mb-6 pb-6 border-b border-gray-700">
+                    <div class="bg-blue-600 text-white text-center py-2 rounded-lg mb-4 font-bold">
+                        💰 ФИКСИРОВАННАЯ ЦЕНА
+                    </div>
+                    <p class="text-gray-500 text-sm mb-2">Цена</p>
+                    <p class="text-4xl md:text-5xl font-bold gold-text">{{ animal.price }}</p>
+                    <p class="text-gray-400 text-lg mt-1">TJS</p>
+                </div>
+            {% endif %}
+            
+            <!-- Seller Info -->
+            <div class="mb-6 pb-6 border-b border-gray-700">
+                <h3 class="text-lg font-semibold mb-3 text-gray-300">Продавец</h3>
+                <a href="{% url 'seller_profile' animal.owner.username %}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition group">
+                    <div class="w-12 h-12 bg-[#D4AF37] rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-black font-bold text-xl">{{ animal.owner.username|first|upper }}</span>
+                    </div>
+                    <div>
+                        <p class="text-gray-200 font-semibold group-hover:text-[#D4AF37] transition flex items-center gap-2">
+                            {{ animal.owner.username }}
+                            {% if animal.owner.profile.is_verified %}
+                            <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </p>
+                        <p class="text-gray-500 text-sm">Посмотреть профиль →</p>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Smart Offer Button (Fixed Price Only, Not for Owner) -->
+            {% if animal.listing_type == 'fixed' and user.is_authenticated and user != animal.owner %}
+            <div class="mb-6 pb-6 border-b border-gray-700">
+                <button 
+                    onclick="openOfferModal()"
+                    class="w-full flex items-center justify-center px-4 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    💰 Предложить свою цену
+                </button>
+                <p class="text-gray-500 text-xs text-center mt-2">Торг уместен! Предложите свою цену</p>
+            </div>
+            {% endif %}
+            
+            <!-- Contact Buttons -->
+            <div class="space-y-3">
+                <h3 class="text-lg font-semibold mb-3 text-gray-300">Контакты</h3>
+                
+                <!-- Phone -->
+                <a href="tel:{{ animal.phone }}" class="flex items-center justify-center px-4 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    {{ animal.phone }}
+                </a>
+                
+                <!-- WhatsApp -->
+                {% if animal.whatsapp_number %}
+                <a href="https://wa.me/{{ animal.whatsapp_number|cut:'+' }}" target="_blank" class="flex items-center justify-center px-4 py-3 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#20BA5A] transition">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                    WhatsApp
+                </a>
+                {% endif %}
+                
+                <!-- Telegram -->
+                {% if animal.telegram_username %}
+                <a href="https://t.me/{{ animal.telegram_username }}" target="_blank" class="flex items-center justify-center px-4 py-3 bg-[#0088cc] text-white font-semibold rounded-lg hover:bg-[#0077b3] transition">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    </svg>
+                    Telegram
+                </a>
+                {% endif %}
+            </div>
+            
+            <!-- Date Published -->
+            <div class="mt-6 pt-6 border-t border-gray-700">
+                <p class="text-gray-500 text-sm">Опубликовано</p>
+                <p class="text-gray-300 font-semibold">{{ animal.created_at|date:"d.m.Y в H:i" }}</p>
+            </div>
+            
+            <!-- Edit/Delete for Owner -->
+            {% if user == animal.owner %}
+            <div class="mt-6 space-y-2">
+                <a href="{% url 'edit_animal' animal.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+                    Редактировать
+                </a>
+                <a href="{% url 'delete_animal' animal.pk %}" class="block text-center px-4 py-2 border-2 border-red-600 text-red-600 font-semibold rounded-lg hover:bg-red-600 hover:text-white transition">
+                    Удалить
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Back Button -->
+<div class="mt-8">
+    <a href="{% url 'home' %}" class="inline-flex items-center text-[#D4AF37] hover:text-[#C5A028] transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Вернуться к списку
+    </a>
+</div>
+
+<!-- Auction Countdown Script -->
+<!-- Auction Countdown Timer Script -->
+<style>
+/* Custom scrollbar for bid history */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #121212;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #C5A028;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
+
+<script>
+// Toggle Favorite Function
+document.addEventListener('DOMContentLoaded', function() {
+    // Auction Countdown Timer
+    const timerContainer = document.getElementById('countdown-timer');
+    
+    if (timerContainer) {
+        const endDateStr = timerContainer.dataset.end;
+        const endDate = new Date(endDateStr);
+        
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+        const statusEl = document.getElementById('auction-status');
+        const bidFormContainer = document.getElementById('bid-form-container');
+        const bidSubmitBtn = document.getElementById('bid-submit-btn');
+        
+        function updateCountdown() {
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff <= 0) {
+                // Auction ended
+                if (daysEl) daysEl.textContent = '00';
+                if (hoursEl) hoursEl.textContent = '00';
+                if (minutesEl) minutesEl.textContent = '00';
+                if (secondsEl) secondsEl.textContent = '00';
+                
+                if (statusEl) {
+                    statusEl.classList.remove('hidden');
+                }
+                
+                if (bidFormContainer) {
+                    bidFormContainer.style.opacity = '0.5';
+                    bidFormContainer.style.pointerEvents = 'none';
+                }
+                
+                if (bidSubmitBtn) {
+                    bidSubmitBtn.disabled = true;
+                    bidSubmitBtn.textContent = '🔒 АУКЦИОН ЗАВЕРШЁН';
+                    bidSubmitBtn.classList.add('cursor-not-allowed', 'opacity-50');
+                }
+                
+                return;
+            }
+            
+            // Calculate time units
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            // Update DOM with leading zeros
+            if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+            
+            // Visual urgency effects
+            if (diff < 3600000) { // Less than 1 hour
+                timerContainer.classList.add('animate-pulse');
+                if (daysEl) daysEl.classList.add('text-red-500');
+                if (hoursEl) hoursEl.classList.add('text-red-500');
+                if (minutesEl) minutesEl.classList.add('text-red-500');
+                if (secondsEl) secondsEl.classList.add('text-red-500');
+            } else if (diff < 86400000) { // Less than 24 hours
+                if (hoursEl) hoursEl.classList.add('text-yellow-500');
+                if (minutesEl) minutesEl.classList.add('text-yellow-500');
+            }
+        }
+        
+        // Initial update
+        updateCountdown();
+        
+        // Update every second
+        setInterval(updateCountdown, 1000);
+    }
+    
+    // Bid form validation enhancement
+    const bidForm = document.getElementById('bid-form');
+    if (bidForm) {
+        bidForm.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('bid-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Отправка...';
+            }
+        });
+    }
+});
+</script>
+
+<!-- Q&A / Comments Section -->
+<div class="mt-12 max-w-4xl mx-auto">
+    <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6">
+        <h2 class="text-3xl font-bold text-[#D4AF37] mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Вопросы и Ответы
+        </h2>
+        
+        <!-- Comment Form -->
+        {% if user.is_authenticated %}
+        <div class="mb-8 bg-[#121212] rounded-lg p-5 border border-gray-700">
+            <form method="post" action="{% url 'add_comment' animal.pk %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="{{ comment_form.text.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        💬 Задайте вопрос продавцу
+                    </label>
+                    {{ comment_form.text }}
+                    {% if comment_form.text.errors %}
+                        <p class="text-red-500 text-sm mt-2">{{ comment_form.text.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="w-full px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                    📤 Отправить вопрос
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="mb-8 bg-blue-900/20 border border-blue-700/50 rounded-lg p-5 text-center">
+            <p class="text-gray-300 mb-3">Чтобы задать вопрос, необходимо войти в систему</p>
+            <a href="{% url 'login' %}?next={{ request.path }}" class="inline-block px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                🔑 Войти
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Comments List -->
+        <div class="space-y-4">
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="bg-[#121212] rounded-lg p-5 border border-gray-700 hover:border-[#D4AF37] transition">
+                    <div class="flex items-start">
+                        <!-- User Avatar -->
+                        <div class="flex-shrink-0 mr-4">
+                            <div class="w-12 h-12 rounded-full bg-[#D4AF37] flex items-center justify-center text-black font-bold text-xl">
+                                {{ comment.author.username|slice:":1"|upper }}
+                            </div>
+                        </div>
+                        
+                        <!-- Comment Content -->
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-[#D4AF37]">{{ comment.author.username }}</span>
+                                    {% if comment.author == animal.owner %}
+                                    <span class="px-2 py-1 bg-[#D4AF37] text-black text-xs font-semibold rounded">
+                                        Продавец
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm text-gray-500">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <p class="text-gray-200 leading-relaxed">{{ comment.text }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-12 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p class="text-lg">Пока нет вопросов</p>
+                <p class="text-sm mt-2">Будьте первым, кто задаст вопрос!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Contact Bar (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md bg-black/80 border-t border-[#D4AF37] p-4 safe-area-padding">
+    <div class="flex gap-3">
+        <a 
+            href="tel:{{ animal.phone }}"
+            class="flex-1 flex items-center justify-center px-4 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition"
+        >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            Позвонить
+        </a>
+        {% if animal.whatsapp_number %}
+        <a 
+            href="https://wa.me/{{ animal.whatsapp_number|cut:'+' }}"
+            target="_blank"
+            class="flex-1 flex items-center justify-center px-4 py-3 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20BA5A] transition"
+        >
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            WhatsApp
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Price Offer Modal -->
+<div id="offerModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-[#1E1E1E] rounded-xl border-2 border-[#D4AF37] max-w-md w-full shadow-2xl">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-[#D4AF37]">💰 Предложить цену</h3>
+                <button onclick="closeOfferModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="offerForm" onsubmit="submitOffer(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">
+                        Ваша цена <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="number" 
+                            name="price" 
+                            id="offerPrice"
+                            step="0.01"
+                            min="1"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                            placeholder="Например: {{ animal.price|floatformat:0 }}"
+                        >
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">TJS</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Текущая цена: <span class="text-[#D4AF37] font-bold">{{ animal.price }} TJS</span></p>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">
+                        Сообщение (опционально)
+                    </label>
+                    <textarea 
+                        name="message"
+                        rows="3"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none resize-none"
+                        placeholder="Почему именно эта цена?"
+                    ></textarea>
+                </div>
+                
+                <div id="offerMessage" class="hidden mb-4 p-3 rounded-lg"></div>
+                
+                <div class="flex gap-3">
+                    <button 
+                        type="button"
+                        onclick="closeOfferModal()"
+                        class="flex-1 px-4 py-3 border-2 border-gray-600 text-gray-300 font-semibold rounded-lg hover:border-gray-500 transition"
+                    >
+                        Отмена
+                    </button>
+                    <button 
+                        type="submit"
+                        id="offerSubmitBtn"
+                        class="flex-1 px-4 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F4BF47] text-black font-bold rounded-lg hover:from-[#C5A028] hover:to-[#E5B038] transition"
+                    >
+                        Отправить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Share to Stories Modal -->
+<div id="storyModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-[#1E1E1E] rounded-xl border-2 border-[#D4AF37] max-w-md w-full shadow-2xl my-8">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-[#D4AF37]">📸 Поделиться в Сторис</h3>
+                <button onclick="closeStoryModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Story Card Preview -->
+            <div id="story-card" class="relative bg-gradient-to-br from-black to-gray-900 rounded-2xl overflow-hidden border-4 border-[#D4AF37] aspect-[9/16] shadow-2xl">
+                <!-- Background Image with Overlay -->
+                <div class="absolute inset-0">
+                    <img 
+                        src="{{ animal.main_photo.url }}"
+                        alt="{{ animal.title }}"
+                        class="w-full h-full object-cover opacity-40"
+                    >
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80"></div>
+                </div>
+                
+                <!-- Content -->
+                <div class="relative h-full flex flex-col justify-between p-6">
+                    <!-- Logo Top -->
+                    <div class="text-center">
+                        <div class="inline-block bg-[#D4AF37] text-black px-4 py-2 rounded-full font-black text-xl shadow-lg">
+                            🐾 ZooBozor
+                        </div>
+                    </div>
+                    
+                    <!-- Main Photo -->
+                    <div class="flex-1 flex items-center justify-center py-6">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-2 border-2 border-[#D4AF37]">
+                            <img 
+                                src="{{ animal.main_photo.url }}"
+                                alt="{{ animal.title }}"
+                                class="w-48 h-48 object-cover rounded-xl"
+                            >
+                        </div>
+                    </div>
+                    
+                    <!-- Info Bottom -->
+                    <div class="bg-black/60 backdrop-blur-md rounded-2xl p-4 border border-[#D4AF37]">
+                        <h2 class="text-2xl font-black text-white mb-2 line-clamp-1">{{ animal.title }}</h2>
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="text-4xl font-black text-[#D4AF37]">{{ animal.price|floatformat:0 }}</span>
+                            <span class="text-xl text-gray-300 font-bold">TJS</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">{{ animal.get_category_display }} • {{ animal.get_city_display }}</p>
+                        <div class="text-center pt-3 border-t border-gray-700">
+                            <p class="text-xs text-gray-400">Моё объявление на сайте</p>
+                            <p class="text-xs text-gray-500">Эълони ман дар сомона</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex gap-3">
+                <button 
+                    onclick="closeStoryModal()"
+                    class="flex-1 px-4 py-3 border-2 border-gray-600 text-gray-300 font-semibold rounded-lg hover:border-gray-500 transition"
+                >
+                    Отмена
+                </button>
+                <button 
+                    onclick="downloadStory()"
+                    id="downloadBtn"
+                    class="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 transition flex items-center justify-center gap-2"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Скачать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Button (Fixed Position) -->
+<button 
+    onclick="openStoryModal()"
+    class="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40 w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+    title="Поделиться в Сторис"
+>
+    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4" />
+    </svg>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+// Price Offer Modal
+function openOfferModal() {
+    document.getElementById('offerModal').classList.remove('hidden');
+    document.getElementById('offerModal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeOfferModal() {
+    document.getElementById('offerModal').classList.add('hidden');
+    document.getElementById('offerModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+    document.getElementById('offerForm').reset();
+    document.getElementById('offerMessage').classList.add('hidden');
+}
+
+function submitOffer(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('offerSubmitBtn');
+    const messageDiv = document.getElementById('offerMessage');
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Отправка...';
+    
+    fetch('{% url "create_offer" animal.pk %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            messageDiv.className = 'mb-4 p-3 rounded-lg bg-green-900/30 border border-green-700 text-green-200';
+            messageDiv.textContent = data.message;
+            messageDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                closeOfferModal();
+            }, 2000);
+        } else {
+            messageDiv.className = 'mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-200';
+            messageDiv.textContent = data.error;
+            messageDiv.classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        messageDiv.className = 'mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-200';
+        messageDiv.textContent = 'Произошла ошибка. Попробуйте позже.';
+        messageDiv.classList.remove('hidden');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Отправить';
+    });
+}
+
+// Story Modal
+function openStoryModal() {
+    document.getElementById('storyModal').classList.remove('hidden');
+    document.getElementById('storyModal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeStoryModal() {
+    document.getElementById('storyModal').classList.add('hidden');
+    document.getElementById('storyModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+function downloadStory() {
+    const storyCard = document.getElementById('story-card');
+    const downloadBtn = document.getElementById('downloadBtn');
+    
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Генерация...';
+    
+    html2canvas(storyCard, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#000000'
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'zoobozor_story_{{ animal.pk }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Скачать';
+        
+        // Show success message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        messageDiv.textContent = '✅ Картинка скачана!';
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 3000);
+    });
+}
+
+// Close modals on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeOfferModal();
+        closeStoryModal();
+        closeLightbox();
+    }
+});
+
+// ============ LIGHTBOX GALLERY ============
+const images = [
+    '{{ animal.main_photo.url }}'{% if animal.gallery.all %},
+    {% for image in animal.gallery.all %}'{{ image.image.url }}'{% if not forloop.last %},{% endif %}{% endfor %}
+    {% endif %}
+];
+
+let currentImageIndex = 0;
+
+function openLightbox(index) {
+    currentImageIndex = index;
+    document.getElementById('lightboxModal').classList.remove('hidden');
+    document.getElementById('lightboxModal').classList.add('flex');
+    document.getElementById('lightboxImage').src = images[currentImageIndex];
+    document.getElementById('imageCounter').textContent = `${currentImageIndex + 1} / ${images.length}`;
+    document.body.style.overflow = 'hidden';
+    updateNavButtons();
+}
+
+function closeLightbox() {
+    document.getElementById('lightboxModal').classList.add('hidden');
+    document.getElementById('lightboxModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+function prevImage() {
+    if (currentImageIndex > 0) {
+        currentImageIndex--;
+        document.getElementById('lightboxImage').src = images[currentImageIndex];
+        document.getElementById('imageCounter').textContent = `${currentImageIndex + 1} / ${images.length}`;
+        updateNavButtons();
+    }
+}
+
+function nextImage() {
+    if (currentImageIndex < images.length - 1) {
+        currentImageIndex++;
+        document.getElementById('lightboxImage').src = images[currentImageIndex];
+        document.getElementById('imageCounter').textContent = `${currentImageIndex + 1} / ${images.length}`;
+        updateNavButtons();
+    }
+}
+
+function updateNavButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (currentImageIndex === 0) {
+        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    if (currentImageIndex === images.length - 1) {
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    const lightbox = document.getElementById('lightboxModal');
+    if (!lightbox.classList.contains('hidden')) {
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'ArrowRight') nextImage();
+    }
+});
+</script>
+
+<!-- Lightbox Modal -->
+<div id="lightboxModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/95 backdrop-blur-sm p-4">
+    <!-- Close Button -->
+    <button 
+        onclick="closeLightbox()"
+        class="fixed top-4 right-4 z-[110] w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+        title="Закрыть (ESC)"
+    >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+    
+    <!-- Image Counter -->
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white font-semibold">
+        <span id="imageCounter">1 / 1</span>
+    </div>
+    
+    <!-- Previous Button -->
+    <button 
+        id="prevBtn"
+        onclick="prevImage()"
+        class="fixed left-4 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+        title="Предыдущее (←)"
+    >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button>
+    
+    <!-- Next Button -->
+    <button 
+        id="nextBtn"
+        onclick="nextImage()"
+        class="fixed right-4 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+        title="Следующее (→)"
+    >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+    </button>
+    
+    <!-- Image Container -->
+    <div class="relative max-w-7xl max-h-[90vh] flex items-center justify-center">
+        <img 
+            id="lightboxImage"
+            src="" 
+            alt="Full size"
+            class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+        >
+    </div>
+</div>
+
+{% endblock %}
+
+

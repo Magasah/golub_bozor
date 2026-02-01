@@ -105,10 +105,10 @@
                     <a href="{% url 'home' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">🏠</span> Главная
                     </a>
-                    <a href="{% url 'add_pigeon' %}" class="block px-4 py-3 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#C5A028] transition">
+                    <a href="{% url 'add_animal' %}" class="block px-4 py-3 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#C5A028] transition">
                         <span class="text-xl mr-2">➕</span> Добавить объявление
                     </a>
-                    <a href="{% url 'my_pigeons' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
+                    <a href="{% url 'my_animals' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
                         <span class="text-xl mr-2">📋</span> Мои объявления
                     </a>
                     <a href="{% url 'vip_payment' %}" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2A2A2A] hover:text-[#D4AF37] transition">
@@ -180,10 +180,10 @@
                 <!-- Desktop Navigation Links (Desktop Only) -->
                 <div class="hidden lg:flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'add_pigeon' %}" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition btn-luxury">
+                        <a href="{% url 'add_animal' %}" class="px-4 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C5A028] transition btn-luxury">
                             + Добавить
                         </a>
-                        <a href="{% url 'my_pigeons' %}" class="text-gray-300 hover:text-[#D4AF37] transition hover-gold">
+                        <a href="{% url 'my_animals' %}" class="text-gray-300 hover:text-[#D4AF37] transition hover-gold">
                             Мои объявления
                         </a>
                         <span class="text-gray-400">{{ user.username }}</span>
@@ -246,7 +246,7 @@
             </a>
             
             <!-- Add (Center - Highlighted) -->
-            <a href="{% url 'add_pigeon' %}" class="bottom-nav-item flex flex-col items-center -mt-4">
+            <a href="{% url 'add_animal' %}" class="bottom-nav-item flex flex-col items-center -mt-4">
                 <div class="w-14 h-14 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-lg vip-glow">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -256,7 +256,7 @@
             </a>
             
             <!-- Favorites -->
-            <a href="{% url 'my_pigeons' %}" class="bottom-nav-item flex flex-col items-center text-gray-400 hover:text-[#D4AF37] {% if request.resolver_match.url_name == 'my_pigeons' %}active{% endif %}">
+            <a href="{% url 'my_animals' %}" class="bottom-nav-item flex flex-col items-center text-gray-400 hover:text-[#D4AF37] {% if request.resolver_match.url_name == 'my_animals' %}active{% endif %}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
@@ -332,3 +332,4 @@
     
 </body>
 </html>
+

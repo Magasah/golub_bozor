@@ -1,0 +1,57 @@
+<!-- Поля для скота (Коровы, Бараны, Козы, Лошади) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Вес -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            ⚖️ Вес (кг)
+        </label>
+        <input 
+            type="number" 
+            name="weight" 
+            step="0.01"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 350"
+        >
+    </div>
+    
+    <!-- Порода скота -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            🐄 Порода
+        </label>
+        <input 
+            type="text" 
+            name="livestock_breed"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Гиссарская, Абердин-ангус"
+        >
+    </div>
+    
+    <!-- Пол -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            ⚥ Пол
+        </label>
+        <select 
+            name="gender_livestock"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+        >
+            <option value="">Выберите пол</option>
+            <option value="male">Самец</option>
+            <option value="female">Самка</option>
+        </select>
+    </div>
+    
+    <!-- Возраст -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            📅 Возраст
+        </label>
+        <input 
+            type="text" 
+            name="age"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 2 года, 18 месяцев"
+        >
+    </div>
+</div>

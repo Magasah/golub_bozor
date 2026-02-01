@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Пополнение баланса - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>💳 Пополнение баланса кошелька</h1>
+    
+    <div style="background: #f8f8f8; border-left: 5px solid #D4AF37; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p><strong>Пользователь:</strong> {{ profile.user.username }}</p>
+        <p><strong>Email:</strong> {{ profile.user.email }}</p>
+        <p><strong>Текущий баланс:</strong> <span style="color: #D4AF37; font-weight: bold; font-size: 18px;">{{ profile.balance }} TJS</span></p>
+    </div>
+
+    <form method="post" style="background: white; padding: 20px; border-radius: 4px; border: 1px solid #ddd;">
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <div style="margin-top: 20px;">
+            <button type="submit" class="button" style="background: #D4AF37; color: black; font-weight: bold; padding: 8px 20px; border-radius: 4px; cursor: pointer;">
+                ✅ Пополнить баланс
+            </button>
+            <a href="/admin/core/userprofile/" class="button" style="background: #999; color: white; padding: 8px 20px; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px;">
+                ❌ Отменить
+            </a>
+        </div>
+    </form>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="margin-top: 20px; padding: 10px; border-radius: 4px;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

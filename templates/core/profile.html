@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Продавец {{ seller.username }} - ГолубБозор{% endblock %}
+{% block title %}Продавец {{ seller.username }} - ЗооБозор{% endblock %}
 
 {% block content %}
 <!-- Seller Profile Header -->
@@ -23,7 +23,7 @@
             
             <p class="text-gray-400">На сайте с {{ seller.date_joined|date:"F Y" }}</p>
             <p class="text-gray-500 mt-2">
-                Активных объявлений: <span class="text-[#D4AF37] font-semibold">{{ pigeon_count }}</span>
+                Активных объявлений: <span class="text-[#D4AF37] font-semibold">{{ animal_count }}</span>
             </p>
         </div>
     </div>
@@ -60,7 +60,7 @@
             <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="font-semibold text-gray-200">{{ review.author.username }}</span>
+                        <span class="font-semibold text-gray-200">{{ review.buyer.username }}</span>
                         <span class="text-sm text-gray-500">{{ review.created_at|date:"d.m.Y" }}</span>
                     </div>
                     <div class="text-xl" style="color: #D4AF37;">{{ review.get_stars_display }}</div>
@@ -97,32 +97,32 @@
     <h2 class="text-3xl font-bold mb-6">Объявления продавца</h2>
 </div>
 
-{% if pigeons %}
+{% if animals %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for pigeon in pigeons %}
-    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if pigeon.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
+    {% for animal in animals %}
+    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if animal.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
         <!-- VIP Badge -->
-        {% if pigeon.is_vip %}
+        {% if animal.is_vip %}
         <div class="bg-[#D4AF37] text-black text-center py-1 font-semibold text-sm">
             ⭐ VIP ⭐
         </div>
         {% endif %}
         
         <!-- Image -->
-        <a href="{% url 'pigeon_detail' pigeon.pk %}">
+        <a href="{% url 'animal_detail' animal.pk %}">
             <div class="relative">
                 <img 
-                    src="{{ pigeon.image.url }}" 
-                    alt="{{ pigeon.title }}"
+                    src="{{ animal.main_photo.url }}" 
+                    alt="{{ animal.title }}"
                     class="w-full h-64 object-cover"
                 >
                 <!-- Breed & Sex Badge -->
                 <div class="absolute top-2 left-2 flex gap-2">
                     <span class="bg-black/70 text-[#D4AF37] px-2 py-1 rounded text-xs font-semibold">
-                        {{ pigeon.get_breed_display }}
+                        {{ animal.get_breed_display }}
                     </span>
                     <span class="bg-black/70 text-gray-300 px-2 py-1 rounded text-xs">
-                        {{ pigeon.get_sex_display }}
+                        {{ animal.get_sex_display }}
                     </span>
                 </div>
             </div>
@@ -130,23 +130,23 @@
         
         <!-- Content -->
         <div class="p-5">
-            <a href="{% url 'pigeon_detail' pigeon.pk %}">
+            <a href="{% url 'animal_detail' animal.pk %}">
                 <h3 class="text-xl font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">
-                    {{ pigeon.title }}
+                    {{ animal.title }}
                 </h3>
             </a>
             
             <p class="text-sm text-gray-500 mb-2">
-                {{ pigeon.get_game_type_display }}
+                {{ animal.get_game_type_display }}
             </p>
             
             <p class="text-gray-400 text-sm mb-4 line-clamp-2">
-                {{ pigeon.description|truncatewords:15 }}
+                {{ animal.description|truncatewords:15 }}
             </p>
             
             <!-- Price -->
             <div class="mb-4">
-                <span class="text-3xl font-bold gold-text">{{ pigeon.price }}</span>
+                <span class="text-3xl font-bold gold-text">{{ animal.price }}</span>
                 <span class="text-gray-400 ml-1">TJS</span>
             </div>
             
@@ -156,12 +156,12 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {{ pigeon.created_at|date:"d.m.Y" }}
+                    {{ animal.created_at|date:"d.m.Y" }}
                 </div>
             </div>
             
             <!-- Action Button -->
-            <a href="{% url 'pigeon_detail' pigeon.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+            <a href="{% url 'animal_detail' animal.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
                 Подробнее →
             </a>
         </div>
@@ -200,24 +200,25 @@
         <form method="post" action="">
             {% csrf_token %}
             
-            <!-- Rating Stars -->
+            <!-- ЗАДАЧА 2: Интерактивные звезды (SVG) -->
             <div class="mb-6">
-                <label class="block text-gray-300 mb-3 font-semibold">{{ review_form.rating.label }}</label>
-                <div class="flex gap-2">
-                    {% for value, label in review_form.rating.field.choices %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="rating" value="{{ value }}" class="hidden peer" required>
-                        <div class="w-12 h-12 flex items-center justify-center text-2xl border-2 border-gray-600 rounded-lg peer-checked:border-[#D4AF37] peer-checked:bg-[#D4AF37]/10 hover:border-[#D4AF37]/50 transition">
-                            {{ value }}
-                        </div>
+                <label class="block text-gray-300 mb-4 font-semibold text-lg">Оценка</label>
+                <div class="flex gap-3 justify-center" id="star-rating-container">
+                    {% for i in "12345" %}
+                    <label class="cursor-pointer star-label" data-rating="{{ forloop.counter }}">
+                        <input type="radio" name="rating" value="{{ forloop.counter }}" class="hidden peer rating-input" required>
+                        <svg class="w-14 h-14 star-icon transition-all duration-200 text-gray-600 hover:scale-110" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
                     </label>
                     {% endfor %}
                 </div>
+                <p class="text-center text-gray-400 text-sm mt-3">Кликните на звезду для оценки (1-5)</p>
             </div>
             
             <!-- Comment -->
             <div class="mb-6">
-                <label class="block text-gray-300 mb-2 font-semibold">{{ review_form.text.label }}</label>
+                <label class="block text-gray-300 mb-2 font-semibold">Комментарий</label>
                 {{ review_form.text }}
             </div>
             
@@ -251,6 +252,47 @@ document.getElementById('reviewModal')?.addEventListener('click', function(e) {
         closeReviewModal();
     }
 });
+
+// ЗАДАЧА 2: Интерактивные звезды
+(function() {
+    const container = document.getElementById('star-rating-container');
+    if (!container) return;
+    
+    const stars = container.querySelectorAll('.star-label');
+    const inputs = container.querySelectorAll('.rating-input');
+    
+    function highlightStars(rating) {
+        stars.forEach((star, idx) => {
+            const icon = star.querySelector('.star-icon');
+            if (idx < rating) {
+                icon.classList.add('text-[#D4AF37]');
+                icon.classList.remove('text-gray-600');
+            } else {
+                icon.classList.remove('text-[#D4AF37]');
+                icon.classList.add('text-gray-600');
+            }
+        });
+    }
+    
+    stars.forEach((star, idx) => {
+        star.addEventListener('mouseenter', () => highlightStars(idx + 1));
+        star.addEventListener('click', () => {
+            inputs[idx].checked = true;
+            highlightStars(idx + 1);
+        });
+    });
+    
+    container.addEventListener('mouseleave', () => {
+        let selected = 0;
+        inputs.forEach((inp, idx) => {
+            if (inp.checked) selected = idx + 1;
+        });
+        highlightStars(selected);
+    });
+    
+    highlightStars(0);
+})();
 </script>
 {% endif %}
 {% endblock %}
+

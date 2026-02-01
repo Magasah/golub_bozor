@@ -1,7 +1,7 @@
 {
-  "name": "GolubBozor - Рынок голубей",
-  "short_name": "GolubBozor",
-  "description": "Маркетплейс для продажи и покупки голубей в Таджикистане",
+  "name": "ZooBozor - Маркетплейс животных",
+  "short_name": "ZooBozor",
+  "description": "Маркетплейс для продажи и покупки животных в Таджикистане: кошки, собаки, голуби, лошади, скот",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",

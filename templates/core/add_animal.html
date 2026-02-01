@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if animal %}Редактировать{% else %}Добавить объявление{% endif %} - ЗооБозор{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl md:text-4xl font-bold gold-text mb-8">
+        {% if animal %}
+        Редактировать объявление
+        {% else %}
+        Добавить новое объявление
+        {% endif %}
+    </h1>
+    
+    <div class="bg-[#1E1E1E] rounded-lg p-6 md:p-8 border border-gray-800">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Form Errors Display -->
+            {% if form.errors %}
+            <div class="border-2 border-red-600 bg-red-900/30 rounded-lg p-5 mb-6">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-lg font-bold text-red-400 mb-2">❌ Ошибки в форме:</p>
+                        <ul class="list-disc list-inside space-y-1 text-red-300">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if form.non_field_errors %}
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Listing Type (Radio Buttons) -->
+            <div class="border-2 border-[#D4AF37] rounded-lg p-5 bg-[#121212]">
+                <label class="block text-lg font-bold text-[#D4AF37] mb-4">
+                    📋 Тип размещения *
+                </label>
+                <div class="space-y-3">
+                    {% for choice_value, choice_label in form.listing_type.field.choices %}
+                    <label class="flex items-center p-4 bg-[#1E1E1E] rounded-lg border-2 border-gray-700 hover:border-[#D4AF37] cursor-pointer transition group">
+                        <input type="radio" name="listing_type" value="{{ choice_value }}" 
+                               class="w-5 h-5 text-[#D4AF37] bg-[#121212] border-gray-600 focus:ring-[#D4AF37] focus:ring-2"
+                               {% if form.listing_type.value == choice_value or choice_value == 'fixed' and not form.listing_type.value %}checked{% endif %}
+                               onchange="toggleAuctionFields()">
+                        <span class="ml-3 text-base font-medium text-gray-200 group-hover:text-[#D4AF37]">
+                            {{ choice_label }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.listing_type.errors %}
+                    <p class="text-red-500 text-sm mt-2">{{ form.listing_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Category Selection with HTMX -->
+            <div>
+                <label for="{{ form.category.id_for_label }}" class="block text-lg font-semibold text-[#D4AF37] mb-2">
+                    📁 Категория животного *
+                </label>
+                <select 
+                    name="category" 
+                    id="id_category"
+                    class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                    hx-get="{% url 'get_animal_fields' %}"
+                    hx-target="#specific-fields-container"
+                    hx-trigger="change"
+                    hx-include="[name='category']"
+                    required
+                >
+                    <option value="">Выберите категорию</option>
+                    {% for value, label in form.category.field.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.category.errors %}
+                    <p class="text-red-500 text-sm mt-2">{{ form.category.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- ЗАДАЧА 3: Контейнер для динамических полей -->
+            <div id="specific-fields-container" class="border-2 border-[#D4AF37]/30 rounded-lg p-5 bg-[#1E1E1E]">
+                <p class="text-gray-500 text-center py-8">
+                    ⬆️ Выберите категорию, чтобы увидеть специфичные поля
+                </p>
+            </div>
+            
+            <!-- Auction Fee Warning (Hidden by default) -->
+            <div id="auctionWarning" class="hidden border-2 border-red-600 bg-red-900/20 rounded-lg p-5">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <p class="text-lg font-bold text-[#D4AF37] mb-1">⚠️ Внимание!</p>
+                        <p class="text-base text-red-400 font-semibold">
+                            Стоимость размещения аукциона: <span class="text-2xl text-[#D4AF37]">3 сомони</span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-2">
+                            После проверки чека администратором ваш аукцион будет активирован.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Instructions Box (Hidden by default) -->
+            <div id="paymentBox" class="hidden border-2 border-[#D4AF37] bg-gradient-to-br from-[#1E1E1E] to-[#121212] rounded-lg p-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-[#D4AF37] mb-3">💳 Оплата размещения аукциона</h3>
+                    <p class="text-gray-300 mb-4">Для активации аукциона переведите <span class="text-[#D4AF37] font-bold text-xl">3 сомони</span> на кошелек:</p>
+                    
+                    <div class="bg-[#121212] border-2 border-[#D4AF37] rounded-lg p-5 mb-4 inline-block">
+                        <p class="text-sm text-gray-400 mb-2">Alif / DC Money:</p>
+                        <div class="flex items-center justify-center gap-3">
+                            <p id="phoneNumber" class="text-3xl md:text-4xl font-bold text-[#D4AF37] tracking-wider">+992 888 788 181</p>
+                            <button type="button" onclick="copyPhoneNumber()" class="px-5 py-3 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold rounded-xl hover:from-[#FFD700] hover:to-[#D4AF37] transition-all duration-300 shadow-lg shadow-[#D4AF37]/40 hover:shadow-[#FFD700]/50 hover:scale-110">
+                                📋 Копировать
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Receipt Upload -->
+                <div>
+                    <label for="{{ form.payment_receipt.id_for_label }}" class="block text-base font-bold text-[#D4AF37] mb-3 text-center">
+                        📸 Загрузите скриншот чека оплаты *
+                    </label>
+                    {{ form.payment_receipt }}
+                    {% if form.payment_receipt.errors %}
+                        <p class="text-red-500 text-sm mt-2 text-center">{{ form.payment_receipt.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-2 text-center">
+                        Сделайте скриншот подтверждения перевода и загрузите его
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Название *
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Breed, Age, Gender - Grid (Conditional Fields) -->
+            <div id="animalDetailsFields" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Breed -->
+                <div>
+                    <label for="{{ form.breed.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Порода
+                    </label>
+                    {{ form.breed }}
+                    {% if form.breed.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.breed.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Age -->
+                <div>
+                    <label for="{{ form.age.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Возраст
+                    </label>
+                    {{ form.age }}
+                    {% if form.age.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.age.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Gender -->
+                <div>
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        Пол
+                    </label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.gender.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- City -->
+                <div>
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        🏙️ Город *
+                    </label>
+                    {{ form.city }}
+                    {% if form.city.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Transport Fields (Visible only for transport category) -->
+            <div id="transportFields" class="hidden grid grid-cols-1 gap-4">
+                <!-- Transport Type -->
+                <div>
+                    <label for="{{ form.transport_type.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        🚗 Тип транспорта
+                    </label>
+                    {% if form.transport_type %}
+                        {{ form.transport_type }}
+                    {% else %}
+                        <input type="text" name="transport_type" placeholder="Маршрутка, микроавтобус и т.д." class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+                    {% endif %}
+                </div>
+                
+                <!-- Route From -->
+                <div>
+                    <label for="{{ form.route_from.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        📍 Маршрут от (откуда)
+                    </label>
+                    {% if form.route_from %}
+                        {{ form.route_from }}
+                    {% else %}
+                        <input type="text" name="route_from" placeholder="Например: Душанбе" class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+                    {% endif %}
+                </div>
+                
+                <!-- Route To -->
+                <div>
+                    <label for="{{ form.route_to.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                        🎯 Маршрут до (куда)
+                    </label>
+                    {% if form.route_to %}
+                        {{ form.route_to }}
+                    {% else %}
+                        <input type="text" name="route_to" placeholder="Например: Худжанд" class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Gender (Livestock variant) -->
+            <div class="hidden">
+                <label for="{{ form.gender_livestock.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Пол скота
+                </label>
+                {% if form.gender_livestock %}
+                    {{ form.gender_livestock }}
+                {% endif %}
+            </div>
+            
+            <!-- Weight -->
+            <div class="hidden">
+                <label for="{{ form.weight.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Вес (кг)
+                </label>
+                {% if form.weight %}
+                    {{ form.weight }}
+                {% endif %}
+            </div>
+            
+            <!-- Color Variety -->
+            <div class="hidden">
+                <label for="{{ form.color_variety.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Расцветка
+                </label>
+                {% if form.color_variety %}
+                    {{ form.color_variety }}
+                {% endif %}
+            </div>
+            
+            <!-- Flight Duration -->
+            <div class="hidden">
+                <label for="{{ form.flight_duration.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Длительность полета
+                </label>
+                {% if form.flight_duration %}
+                    {{ form.flight_duration }}
+                {% endif %}
+            </div>
+            
+            <!-- Game Style -->
+            <div class="hidden">
+                <label for="{{ form.game_style.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Стиль игры
+                </label>
+                {% if form.game_style %}
+                    {{ form.game_style }}
+                {% endif %}
+            </div>
+            
+            <!-- Health Status -->
+            <div class="hidden">
+                <label for="{{ form.health_status.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Статус здоровья
+                </label>
+                {% if form.health_status %}
+                    {{ form.health_status }}
+                {% endif %}
+            </div>
+
+                <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    💰 Цена (TJS) *
+                </label>
+                {{ form.price }}
+                {% if form.price.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Auction Fields (Hidden by default) -->
+            <div id="auctionFields" class="hidden space-y-4 border-2 border-[#D4AF37] rounded-lg p-5 bg-[#121212]">
+                <h3 class="text-lg font-bold text-[#D4AF37] mb-3">🔨 Настройки аукциона</h3>
+                
+                <!-- Start Price -->
+                <div>
+                    <label for="{{ form.start_price.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                        Начальная цена (TJS) *
+                    </label>
+                    {{ form.start_price }}
+                    {% if form.start_price.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.start_price.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">С этой суммы начнутся торги</p>
+                </div>
+                
+                <!-- Auction End Date -->
+                <div>
+                    <label for="{{ form.auction_end_date.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                        Дата и время окончания аукциона *
+                    </label>
+                    {{ form.auction_end_date }}
+                    {% if form.auction_end_date.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.auction_end_date.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Выберите когда закончится аукцион</p>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Описание *
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- SIMPLE PHOTO UPLOAD SYSTEM -->
+            <div class="border-2 border-[#D4AF37] rounded-xl p-6 bg-gradient-to-br from-[#1E1E1E] to-[#121212]">
+                
+                <!-- MAIN PHOTO (REQUIRED) -->
+                <div class="mb-6">
+                    <label for="{{ form.main_photo.id_for_label }}" class="block text-lg font-bold text-[#D4AF37] mb-3">
+                        📸 Главное фото (обязательно)
+                    </label>
+                    <p class="text-sm text-gray-400 mb-3">Это фото будет отображаться в каталоге</p>
+                    {{ form.main_photo }}
+                    {% if form.main_photo.errors %}
+                        <div class="mt-3 p-3 bg-red-900/30 border border-red-600 rounded-lg">
+                            <p class="text-red-400 text-sm font-semibold">{{ form.main_photo.errors.0 }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- EXTRA PHOTOS (OPTIONAL, 0-4) -->
+                <div>
+                    <label class="block text-lg font-bold text-[#D4AF37] mb-3">
+                        🖼️ Дополнительные фото (необязательно, до 4 штук)
+                    </label>
+                    <p class="text-sm text-gray-400 mb-3">Эти фото появятся в галерее на странице объявления</p>
+                    <input 
+                        type="file" 
+                        name="extra_images" 
+                        multiple 
+                        accept="image/*"
+                        class="block w-full px-6 py-4 bg-gradient-to-r from-[#1E1E1E] to-[#2A2A2A] border-2 border-gray-600 rounded-xl text-gray-200 focus:border-[#D4AF37] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 hover:border-[#FFD700] transition-all cursor-pointer file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+                    >
+                    <p class="text-xs text-gray-500 mt-2">
+                        Можно выбрать от 0 до 4 дополнительных фотографий
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Contact Information Section -->
+            <div class="border-t border-gray-700 pt-6 mt-6">
+                <h3 class="text-xl font-bold text-[#D4AF37] mb-4">📞 Контактная информация</h3>
+                
+                <div class="space-y-4">
+                    <!-- Phone -->
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Телефон *
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Формат: +992XXXXXXXXX</p>
+                    </div>
+                    
+                    <!-- WhatsApp -->
+                    <div>
+                        <label for="{{ form.whatsapp_number.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            WhatsApp (необязательно)
+                        </label>
+                        {{ form.whatsapp_number }}
+                        {% if form.whatsapp_number.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.whatsapp_number.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Номер WhatsApp (формат: +992XXXXXXXXX)</p>
+                    </div>
+                    
+                    <!-- Telegram -->
+                    <div>
+                        <label for="{{ form.telegram_username.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Telegram (необязательно)
+                        </label>
+                        {{ form.telegram_username }}
+                        {% if form.telegram_username.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.telegram_username.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Ваш Telegram username без @ (например: username)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Video URL -->
+            <div>
+                <label for="{{ form.video_url.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    🎥 Видео YouTube (необязательно)
+                </label>
+                {{ form.video_url }}
+                {% if form.video_url.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.video_url.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">
+                    Вставьте ссылку на YouTube видео
+                </p>
+            </div>
+            
+            <!-- VIP -->
+            <div class="flex items-start space-x-3 p-4 bg-[#121212] rounded-lg">
+                {{ form.is_vip }}
+                <label for="{{ form.is_vip.id_for_label }}" class="text-sm text-gray-300 cursor-pointer">
+                    <span class="font-semibold text-[#D4AF37] text-base">⭐ VIP размещение</span>
+                    <span class="block text-xs text-gray-500 mt-1">Ваше объявление будет выделено золотой рамкой и показано первым</span>
+                    <a href="{% url 'vip_request' %}" class="text-[#D4AF37] hover:underline text-xs mt-1 inline-block">Подробнее о VIP →</a>
+                </label>
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="p-4 bg-red-900 border border-red-700 rounded-lg">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Moderation Notice -->
+            <div class="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="text-sm text-blue-300 font-semibold mb-1">ℹ️ Модерация объявлений</p>
+                        <p class="text-xs text-gray-400">
+                            {% if animal %}
+                            После сохранения изменений объявление будет отправлено на повторную модерацию.
+                            {% else %}
+                            Ваше объявление появится на сайте после проверки модератором (обычно в течение 24 часов).
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit" id="submitButton" class="flex-1 px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold text-lg rounded-xl hover:from-[#FFD700] hover:to-[#D4AF37] transition-all duration-300 shadow-lg shadow-[#D4AF37]/50 hover:shadow-[#FFD700]/60 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                    {% if animal %}
+                        💾 Сохранить изменения
+                    {% else %}
+                        🚀 Опубликовать объявление
+                    {% endif %}
+                </button>
+                <a href="{% if animal %}{% url 'animal_detail' animal.pk %}{% else %}{% url 'home' %}{% endif %}" class="flex-1 text-center px-8 py-4 border-2 border-gray-600 text-gray-300 font-bold text-lg rounded-xl hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#2A2A2A] transition-all duration-300 hover:scale-105">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 💫 Loading Spinner Overlay (Dark Luxury) -->
+<div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+    <div class="text-center">
+        <!-- Animated animal Icon -->
+        <div class="mb-6 animate-bounce">
+            <div class="text-8xl">🦅</div>
+        </div>
+        
+        <!-- Loading Text -->
+        <h2 class="text-3xl font-bold text-[#D4AF37] mb-3">
+            Загрузка...
+        </h2>
+        <p class="text-gray-300 text-lg">
+            Пожалуйста, подождите
+        </p>
+        
+        <!-- Spinner Animation -->
+        <div class="mt-6 flex justify-center">
+            <div class="w-16 h-16 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        
+        <!-- Progress Hint -->
+        <p class="text-sm text-gray-500 mt-4">
+            Загружаются изображения...
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleAuctionFields() {
+    const listingTypeInputs = document.querySelectorAll('input[name="listing_type"]');
+    let selectedType = 'fixed';
+    
+    listingTypeInputs.forEach(input => {
+        if (input.checked) {
+            selectedType = input.value;
+        }
+    });
+    
+    const auctionWarning = document.getElementById('auctionWarning');
+    const paymentBox = document.getElementById('paymentBox');
+    const auctionFields = document.getElementById('auctionFields');
+    const fixedPriceField = document.getElementById('fixedPriceField');
+    
+    // Get form fields
+    const priceInput = document.querySelector('input[name="price"]');
+    const startPriceInput = document.querySelector('input[name="start_price"]');
+    const auctionEndDateInput = document.querySelector('input[name="auction_end_date"]');
+    const paymentReceiptInput = document.querySelector('input[name="payment_receipt"]');
+    
+    if (selectedType === 'auction') {
+        // Show auction elements
+        auctionWarning.classList.remove('hidden');
+        paymentBox.classList.remove('hidden');
+        auctionFields.classList.remove('hidden');
+        fixedPriceField.classList.add('hidden');
+        
+        // Remove required from price, add to auction fields
+        if (priceInput) priceInput.removeAttribute('required');
+        if (startPriceInput) startPriceInput.setAttribute('required', 'required');
+        if (auctionEndDateInput) auctionEndDateInput.setAttribute('required', 'required');
+        if (paymentReceiptInput) paymentReceiptInput.setAttribute('required', 'required');
+    } else {
+        // Show fixed price elements
+        auctionWarning.classList.add('hidden');
+        paymentBox.classList.add('hidden');
+        auctionFields.classList.add('hidden');
+        fixedPriceField.classList.remove('hidden');
+        
+        // Add required to price, remove from auction fields
+        if (priceInput) priceInput.setAttribute('required', 'required');
+        if (startPriceInput) startPriceInput.removeAttribute('required');
+        if (auctionEndDateInput) auctionEndDateInput.removeAttribute('required');
+        if (paymentReceiptInput) paymentReceiptInput.removeAttribute('required');
+    }
+}
+
+function copyPhoneNumber() {
+    const phoneNumber = '+992888788181';
+    navigator.clipboard.writeText(phoneNumber).then(function() {
+        // Show success feedback
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '✅ Скопировано!';
+        button.classList.add('bg-green-600');
+        button.classList.remove('bg-[#D4AF37]');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('bg-green-600');
+            button.classList.add('bg-[#D4AF37]');
+        }, 2000);
+    }, function(err) {
+        alert('Не удалось скопировать. Пожалуйста, скопируйте вручную: +992 888 788 181');
+    });
+}
+
+//💫 Loading Spinner Handler
+function setupLoadingSpinner() {
+    const form = document.querySelector('form');
+    const submitButton = document.getElementById('submitButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    if (!form || !submitButton || !loadingOverlay) return;
+    
+    form.addEventListener('submit', function(e) {
+        console.log('Form submit triggered');
+        
+        // Check main image is uploaded
+        const mainImage = document.querySelector('input[name="image"]');
+        if (mainImage && (!mainImage.files || mainImage.files.length === 0)) {
+            e.preventDefault();
+            alert('❌ Загрузите главное фото животного!');
+            return;
+        }
+        
+        // Validate auction fields if auction type is selected
+        const listingType = document.querySelector('input[name="listing_type"]:checked');
+        console.log('Listing type:', listingType ? listingType.value : 'none');
+        
+        if (listingType && listingType.value === 'auction') {
+            const startPrice = document.querySelector('input[name="start_price"]');
+            const auctionEndDate = document.querySelector('input[name="auction_end_date"]');
+            const paymentReceipt = document.querySelector('input[name="payment_receipt"]');
+            
+            let missingFields = [];
+            
+            if (!startPrice || !startPrice.value) {
+                missingFields.push('Начальная цена');
+            }
+            if (!auctionEndDate || !auctionEndDate.value) {
+                missingFields.push('Дата окончания');
+            }
+            if (!paymentReceipt || !paymentReceipt.files || paymentReceipt.files.length === 0) {
+                missingFields.push('Чек оплаты');
+            }
+            
+            if (missingFields.length > 0) {
+                e.preventDefault();
+                alert('❌ Для аукциона заполните:\n\n• ' + missingFields.join('\n• '));
+                return;
+            }
+        }
+        
+        console.log('Form validation passed, submitting...');
+        
+        // Show loading overlay
+        loadingOverlay.classList.remove('hidden');
+        
+        // Disable submit button
+        submitButton.disabled = true;
+        submitButton.textContent = '⚙️ Отправка...';
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleAuctionFields();
+    setupLoadingSpinner();
+    console.log('Page loaded, scripts initialized');
+    
+    // ЗАДАЧА 2: Initialize dynamic form fields
+    if (window.FormFieldManager) {
+        FormFieldManager.initialize();
+    }
+});
+</script>
+
+<!-- ЗАДАЧА 2: Dynamic Form Fields Management -->
+<script src="{% static 'js/form-fields.js' %}"></script>
+
+{% endblock %}
+

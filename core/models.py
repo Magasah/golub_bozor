@@ -1,53 +1,60 @@
 """
-Models for GolubBozor - Pigeon Marketplace
+Models for ZooBozor - Animal Marketplace
 """
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from decimal import Decimal
+from PIL import Image, ImageDraw, ImageFont
+import os
+from io import BytesIO
+from django.core.files.base import ContentFile
+from django.utils.translation import gettext_lazy as _
 
 
-# Auction system: listing type choices
+# Listing type choices
 LISTING_TYPE_CHOICES = [
     ('fixed', 'Фиксированная цена'),
     ('auction', 'Аукцион'),
 ]
 
 
-class Pigeon(models.Model):
+class Animal(models.Model):
     """
-    Model representing a pigeon listing on the marketplace
+    Model representing an animal listing on the marketplace
     """
     
-    # Breed choices (Extended list for better variety)
-    BREED_CHOICES = [
-        ('lailaki', 'Лайлаки'),
-        ('sochi', 'Сочи'),
-        ('chinny', 'Чинны'),
-        ('sych', 'Сыч'),
-        ('zhuk', 'Жук'),
-        ('mallya', 'Малля'),
-        ('kukcha', 'Кукча'),
-        ('tajik_highflyer', 'Таджикский Лётный'),
-        ('two_crested', 'Двухчубый'),
-        ('tugma', 'Тугма'),
-        ('metis', 'Метис'),
-        ('other', 'Другая'),
+    # CATEGORY CHOICES - Главная классификация
+    CATEGORY_CHOICES = [
+        ('cat', 'Кошки / Гурбаҳо'),
+        ('dog', 'Собаки / Сагҳо'),
+        ('parrot', 'Попугаи / Тӯтиҳо'),
+        ('canary', 'Канарейки / Қанариҳо'),
+        ('partridge', 'Кеклик / Кабкҳо'),
+        ('chicken', 'Куры и Петухи / Мурғ ва Хурӯс'),
+        ('pigeon', 'Голуби / Кафтарҳо'),
+        ('rabbit', 'Кролики / Харгӯшҳо'),
+        ('horse', 'Лошади / Аспҳо'),
+        ('cow', 'Коровы / Говҳо'),
+        ('goat', 'Козы / Бузҳо'),
+        ('sheep', 'Бараны / Гӯсфандҳо'),
+        ('fish', 'Рыбки / Моҳиҳо'),
+        ('hamster', 'Хомяки / Хомякҳо'),
+        ('turtle', 'Черепахи / Сангпуштҳо'),
+        ('bird_other', 'Другие птицы / Паррандаҳои дигар'),
+        ('reptile', 'Рептилии / Хазанда'),
+        ('transport', 'Зоо-Такси / Ташвиқот'),
+        ('other', 'Другие / Дигар'),
     ]
     
-    # Game type choices
-    GAME_TYPE_CHOICES = [
-        ('flight', 'Только полет'),
-        ('game', 'Бойные/Игровые'),
-        ('decoration', 'Декоративные'),
-    ]
-    
-    # Sex choices
-    SEX_CHOICES = [
-        ('male', 'Самец'),
-        ('female', 'Самка'),
-        ('pair', 'Пара'),
+    # Gender choices
+    GENDER_CHOICES = [
+        ('male', 'Самец / Нар'),
+        ('female', 'Самка / Мода'),
+        ('pair', 'Пара / Ҷуфт'),
+        ('unknown', 'Не указано'),
     ]
     
     # City choices
@@ -65,36 +72,175 @@ class Pigeon(models.Model):
         ('other', 'Другой город'),
     ]
     
+    # ========== ОСНОВНЫЕ ПОЛЯ ==========
+    category = models.CharField(
+        max_length=50,
+        choices=CATEGORY_CHOICES,
+        verbose_name='Категория',
+        help_text='Вид животного',
+        db_index=True
+    )
+    
     title = models.CharField(
         max_length=200,
         verbose_name='Название',
-        help_text='Название голубя/объявления'
+        help_text='Название объявления'
+    )
+    
+    description = models.TextField(
+        verbose_name='Описание',
+        help_text='Подробное описание животного'
+    )
+    
+    # ========== ХАРАКТЕРИСТИКИ ЖИВОТНОГО ==========
+    gender = models.CharField(
+        max_length=20,
+        choices=GENDER_CHOICES,
+        default='unknown',
+        blank=True,
+        verbose_name='Пол',
+        help_text='Пол животного'
+    )
+    
+    age = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Возраст',
+        help_text='Например: 2 года, 6 месяцев, 1.5 года'
     )
     
     breed = models.CharField(
-        max_length=50,
-        choices=BREED_CHOICES,
-        default='other',
+        max_length=100,
+        blank=True,
         verbose_name='Порода',
-        help_text='Порода голубя'
+        help_text='Порода животного (если есть)'
     )
     
-    game_type = models.CharField(
-        max_length=50,
-        choices=GAME_TYPE_CHOICES,
-        default='flight',
-        verbose_name='Тип',
-        help_text='Назначение голубя'
+    # ========== СПЕЦИФИЧНЫЕ ПОЛЯ ДЛЯ КАТЕГОРИЙ ==========
+    
+    # Для голубей (Pigeon)
+    pigeon_breed = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Порода голубя',
+        help_text='Например: Бойный, Статный, Николаевский'
     )
     
-    sex = models.CharField(
+    flight_duration = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Длительность полета',
+        help_text='Например: 2-3 часа, до 5 часов'
+    )
+    
+    game_style = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Стиль игры/бой',
+        help_text='Например: Столбовой бой, Ленточный'
+    )
+    
+    GENDER_PIGEON_CHOICES = [
+        ('male', 'Самец'),
+        ('female', 'Самка'),
+        ('pair', 'Пара'),
+    ]
+    
+    gender_pigeon = models.CharField(
         max_length=20,
-        choices=SEX_CHOICES,
-        default='male',
-        verbose_name='Пол',
+        choices=GENDER_PIGEON_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Пол (голубь)',
         help_text='Пол голубя или пара'
     )
     
+    # Для скота (Cow, Sheep, Horse, Goat)
+    weight = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name='Вес (кг)',
+        help_text='Вес животного в килограммах'
+    )
+    
+    livestock_breed = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Порода скота',
+        help_text='Например: Абердин-ангус, Гиссарская, Ахалтекинская'
+    )
+    
+    GENDER_LIVESTOCK_CHOICES = [
+        ('male', 'Самец'),
+        ('female', 'Самка'),
+    ]
+    
+    gender_livestock = models.CharField(
+        max_length=20,
+        choices=GENDER_LIVESTOCK_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Пол (скот)',
+        help_text='Пол животного'
+    )
+    
+    # Для питомцев (Cat, Dog)
+    pet_breed = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Порода питомца',
+        help_text='Например: Британская, Персидская, Немецкая овчарка'
+    )
+    
+    has_passport = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True,
+        verbose_name='Есть паспорт/прививки',
+        help_text='Наличие ветеринарного паспорта'
+    )
+    
+    # Для транспорта (Transport/Зоо-Такси)
+    TRANSPORT_TYPE_CHOICES = [
+        ('sprinter', 'Спринтер'),
+        ('porter', 'Портер'),
+        ('sedan', 'Легковая'),
+        ('minivan', 'Минивэн'),
+    ]
+    
+    transport_type = models.CharField(
+        max_length=50,
+        choices=TRANSPORT_TYPE_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Тип авто',
+        help_text='Тип транспорта для перевозки'
+    )
+    
+    route_from = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Откуда',
+        help_text='Откуда можно забрать животное'
+    )
+    
+    route_to = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Куда',
+        help_text='Куда доставляется животное'
+    )
+    
+    # ========== ЦЕНЫ И ТИП ПРОДАЖИ ==========
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -102,104 +248,15 @@ class Pigeon(models.Model):
         help_text='Цена в сомони (TJS)'
     )
     
-    description = models.TextField(
-        verbose_name='Описание',
-        help_text='Подробное описание птицы'
-    )
-    
-    image = models.ImageField(
-        upload_to='pigeons/',
-        verbose_name='Фото',
-        help_text='Основное фото голубя'
-    )
-    
-    video_url = models.URLField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name='Видео (YouTube)',
-        help_text='Ссылка на YouTube видео (необязательно)'
-    )
-    
-    is_vip = models.BooleanField(
-        default=False,
-        verbose_name='VIP размещение',
-        help_text='Премиум размещение с золотой рамкой'
-    )
-    
-    is_approved = models.BooleanField(
-        default=False,
-        verbose_name='Одобрено',
-        help_text='Объявление прошло модерацию'
-    )
-    
-    city = models.CharField(
-        max_length=50,
-        choices=CITY_CHOICES,
-        default='dushanbe',
-        verbose_name='Город',
-        help_text='Город продавца'
-    )
-    
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='pigeons',
-        verbose_name='Владелец'
-    )
-    
-    phone = models.CharField(
-        max_length=20,
-        verbose_name='Телефон',
-        help_text='Контактный номер телефона'
-    )
-    
-    whatsapp_number = models.CharField(
-        max_length=20,
-        blank=True,
-        verbose_name='WhatsApp',
-        help_text='Номер WhatsApp (например: +992900123456)'
-    )
-    
-    telegram_username = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name='Telegram',
-        help_text='Имя пользователя в Telegram (без @)'
-    )
-    
-    views_count = models.PositiveIntegerField(
-        default=0,
-        verbose_name='Просмотры',
-        help_text='Количество просмотров объявления'
-    )
-    
-    favorites = models.ManyToManyField(
-        User,
-        related_name='favorite_pigeons',
-        blank=True,
-        verbose_name='В избранном у',
-        help_text='Пользователи, добавившие в избранное'
-    )
-    
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата обновления'
-    )
-    
-    # Auction system fields
     listing_type = models.CharField(
         max_length=10,
         choices=LISTING_TYPE_CHOICES,
         default='fixed',
-        verbose_name='Тип продажи'
+        verbose_name='Тип продажи',
+        help_text='Аукцион доступен только для голубей'
     )
     
+    # ========== АУКЦИОННЫЕ ПОЛЯ (только для голубей) ==========
     start_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -234,11 +291,10 @@ class Pigeon(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='won_auctions',
+        related_name='won_animal_auctions',
         verbose_name='Победитель аукциона'
     )
     
-    # Payment verification fields for auctions
     payment_receipt = models.ImageField(
         upload_to='receipts/',
         blank=True,
@@ -249,80 +305,381 @@ class Pigeon(models.Model):
     
     is_paid = models.BooleanField(
         default=False,
-        verbose_name='Оплачено',
-        help_text='Оплата подтверждена администратором'
+        verbose_name='Оплачено'
+    )
+    
+    # ========== МЕДИА ==========
+    main_photo = models.ImageField(
+        upload_to='animals/%Y/%m/',
+        verbose_name='Главное фото',
+        help_text='Основное фото животного'
+    )
+    
+    video_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Видео (YouTube)',
+        help_text='Ссылка на YouTube видео (необязательно)'
+    )
+    
+    # ========== МЕСТОПОЛОЖЕНИЕ И КОНТАКТЫ ==========
+    city = models.CharField(
+        max_length=50,
+        choices=CITY_CHOICES,
+        default='dushanbe',
+        verbose_name='Город',
+        help_text='Город продавца',
+        db_index=True
+    )
+    
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='animals',
+        verbose_name='Владелец'
+    )
+    
+    phone = models.CharField(
+        max_length=20,
+        verbose_name='Телефон',
+        help_text='Контактный номер телефона'
+    )
+    
+    whatsapp_number = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='WhatsApp',
+        help_text='Номер WhatsApp (например: +992900123456)'
+    )
+    
+    telegram_username = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Telegram',
+        help_text='Имя пользователя в Telegram (без @)'
+    )
+    
+    # ========== СТАТУС И МЕТРИКИ ==========
+    STATUS_CHOICES = [
+        ('active', 'Активно'),
+        ('sold', 'Продано'),
+        ('archived', 'В архиве'),
+    ]
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name='Статус',
+        help_text='Статус объявления',
+        db_index=True
+    )
+    
+    is_vip = models.BooleanField(
+        default=False,
+        verbose_name='VIP размещение',
+        help_text='Премиум размещение с золотой рамкой'
+    )
+    
+    is_approved = models.BooleanField(
+        default=False,
+        verbose_name='Одобрено',
+        help_text='Объявление прошло модерацию'
+    )
+    
+    views_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Просмотры',
+        help_text='Количество просмотров объявления'
+    )
+    
+    favorites = models.ManyToManyField(
+        User,
+        related_name='favorite_animals',
+        blank=True,
+        verbose_name='В избранном у',
+        help_text='Пользователи, добавившие в избранное'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания',
+        db_index=True
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
     )
     
     class Meta:
-        verbose_name = 'Голубь'
-        verbose_name_plural = 'Голуби'
-        ordering = ['-is_vip', '-created_at']
+        verbose_name = 'Животное'
+        verbose_name_plural = 'Животные'
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['is_approved', '-created_at']),
-            models.Index(fields=['breed', 'sex']),
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['category', '-created_at']),
+            models.Index(fields=['city', 'category']),
         ]
     
+    def clean(self):
+        """
+        ВАЛИДАЦИЯ: Аукцион доступен только для голубей
+        """
+        super().clean()
+        
+        # Проверка: аукцион только для голубей
+        if self.listing_type == 'auction' and self.category != 'pigeon':
+            raise ValidationError({
+                'listing_type': 'Аукцион доступен только для категории "Голуби". '
+                                'Для других животных выберите "Фиксированная цена".'
+            })
+        
+        # Если аукцион - проверяем обязательные поля
+        if self.listing_type == 'auction':
+            if not self.start_price:
+                raise ValidationError({
+                    'start_price': 'Укажите начальную цену для аукциона.'
+                })
+            if not self.auction_end_date:
+                raise ValidationError({
+                    'auction_end_date': 'Укажите дату окончания аукциона.'
+                })
+            if self.auction_end_date and self.auction_end_date <= timezone.now():
+                raise ValidationError({
+                    'auction_end_date': 'Дата окончания должна быть в будущем.'
+                })
+    
+    def save(self, *args, **kwargs):
+        # Автоматически устанавливаем current_price из start_price для аукциона
+        if self.listing_type == 'auction' and not self.current_price:
+            self.current_price = self.start_price
+        
+        # Валидация перед сохранением
+        self.full_clean()
+        
+        # Добавляем водяной знак на фото перед сохранением
+        if self.main_photo:
+            self._add_watermark()
+        
+        super().save(*args, **kwargs)
+    
+    def _add_watermark(self):
+        """
+        Добавить водяной знак "ZooBozor" на фото.
+        Текст располагается в правом нижнем углу, полупрозрачный белый.
+        """
+        try:
+            # Открываем изображение
+            img = Image.open(self.main_photo)
+            
+            # Преобразуем в RGB если нужно (для JPEG)
+            if img.mode in ('RGBA', 'LA'):
+                # Создаем белый фон
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Создаем копию изображения и слой для текста
+            watermarked = img.copy()
+            txt_layer = Image.new('RGBA', watermarked.size, (255, 255, 255, 0))
+            txt_draw = ImageDraw.Draw(txt_layer)
+            
+            # Пытаемся загрузить шрифт
+            try:
+                # Ищем шрифт в системе
+                font_size = int(watermarked.width / 15)  # Размер относительно ширины
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except:
+                try:
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 40)
+                except:
+                    # Используем стандартный шрифт если специальные недоступны
+                    font = ImageFont.load_default()
+            
+            # Текст водяного знака
+            watermark_text = "ZooBozor"
+            
+            # Получаем размеры текста
+            bbox = txt_draw.textbbox((0, 0), watermark_text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # Позиция: правый нижний угол с отступом
+            margin = 20
+            x = watermarked.width - text_width - margin
+            y = watermarked.height - text_height - margin
+            
+            # Рисуем текст с тенью (для читаемости)
+            shadow_color = (0, 0, 0, 80)  # Черная полутень
+            text_color = (255, 255, 255, 128)  # Белый полупрозрачный (50% opacity)
+            
+            # Тень
+            txt_draw.text((x + 2, y + 2), watermark_text, font=font, fill=shadow_color)
+            # Основной текст
+            txt_draw.text((x, y), watermark_text, font=font, fill=text_color)
+            
+            # Объединяем слои
+            watermarked = watermarked.convert('RGBA')
+            watermarked = Image.alpha_composite(watermarked, txt_layer)
+            watermarked = watermarked.convert('RGB')
+            
+            # Сохраняем в BytesIO
+            output = BytesIO()
+            watermarked.save(output, format='JPEG', quality=90)
+            output.seek(0)
+            
+            # Заменяем содержимое поля
+            file_name = self.main_photo.name
+            self.main_photo.save(file_name, ContentFile(output.read()), save=False)
+        
+        except Exception as e:
+            # Если ошибка - просто логируем и продолжаем без водяного знака
+            print(f"Ошибка добавления водяного знака: {str(e)}")
+            pass
+    
     def __str__(self):
-        return self.title
+        return f"{self.get_category_display()} - {self.title}"
     
     def get_absolute_url(self):
-        return reverse('pigeon_detail', kwargs={'pk': self.pk})
-    
-    def get_youtube_embed_url(self):
-        """
-        Convert YouTube URL to embed URL
-        Supports formats:
-        - https://www.youtube.com/watch?v=VIDEO_ID
-        - https://youtu.be/VIDEO_ID
-        """
-        if not self.video_url:
-            return None
-        
-        video_id = None
-        if 'youtube.com/watch?v=' in self.video_url:
-            video_id = self.video_url.split('watch?v=')[-1].split('&')[0]
-        elif 'youtu.be/' in self.video_url:
-            video_id = self.video_url.split('youtu.be/')[-1].split('?')[0]
-        
-        if video_id:
-            return f'https://www.youtube.com/embed/{video_id}'
-        
-        return None
+        return reverse('animal_detail', kwargs={'pk': self.pk})
     
     def is_auction_active(self):
-        """Check if auction is currently active"""
+        """Проверка активности аукциона"""
         if self.listing_type != 'auction':
             return False
         if self.is_sold:
             return False
-        if self.auction_end_date:
-            from django.utils import timezone
-            return timezone.now() < self.auction_end_date
-        return False
+        if self.auction_end_date and self.auction_end_date <= timezone.now():
+            return False
+        return True
     
-    def get_highest_bid(self):
-        """Get the highest bid for this pigeon"""
-        return self.bids.first()
+    def time_left(self):
+        """Оставшееся время аукциона"""
+        if not self.auction_end_date:
+            return None
+        delta = self.auction_end_date - timezone.now()
+        if delta.total_seconds() <= 0:
+            return "Завершён"
+        
+        days = delta.days
+        hours = delta.seconds // 3600
+        minutes = (delta.seconds % 3600) // 60
+        
+        if days > 0:
+            return f"{days}д {hours}ч"
+        elif hours > 0:
+            return f"{hours}ч {minutes}м"
+        else:
+            return f"{minutes}м"
+
+
+class AnimalImage(models.Model):
+    """
+    Additional images for animal listings (gallery)
+    """
+    animal = models.ForeignKey(
+        Animal,
+        on_delete=models.CASCADE,
+        related_name='gallery',
+        verbose_name='Животное'
+    )
     
-    def get_bid_count(self):
-        """Get total number of bids"""
-        return self.bids.count()
+    image = models.ImageField(
+        upload_to='animals/gallery/%Y/%m/',
+        verbose_name='Фото'
+    )
+    
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата загрузки'
+    )
+    
+    class Meta:
+        verbose_name = 'Фото животного'
+        verbose_name_plural = 'Галерея фото'
+        ordering = ['uploaded_at']
+    
+    def __str__(self):
+        return f"Фото для {self.animal.title}"
+
+
+class Offer(models.Model):
+    """
+    Price offers from buyers (Smart Offer feature)
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает'),
+        ('accepted', 'Принято'),
+        ('rejected', 'Отклонено'),
+    ]
+    
+    animal = models.ForeignKey(
+        Animal,
+        on_delete=models.CASCADE,
+        related_name='offers',
+        verbose_name='Животное'
+    )
+    
+    buyer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='my_offers',
+        verbose_name='Покупатель'
+    )
+    
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Предложенная цена'
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name='Статус'
+    )
+    
+    message = models.TextField(
+        blank=True,
+        verbose_name='Сообщение',
+        help_text='Опциональное сообщение от покупателя'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата предложения'
+    )
+    
+    class Meta:
+        verbose_name = 'Предложение цены'
+        verbose_name_plural = 'Предложения цен'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.buyer.username} предлагает {self.price} TJS за {self.animal.title}"
 
 
 class Bid(models.Model):
-    """Model for auction bids"""
-    pigeon = models.ForeignKey(
-        'Pigeon',
+    """
+    Auction bids for pigeon listings only
+    """
+    animal = models.ForeignKey(
+        Animal,
         on_delete=models.CASCADE,
         related_name='bids',
-        verbose_name='Голубь'
+        verbose_name='Животное (голубь)'
     )
     
-    user = models.ForeignKey(
+    bidder = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='my_bids',
-        verbose_name='Покупатель'
+        related_name='animal_bids',
+        verbose_name='Ставивший'
     )
     
     amount = models.DecimalField(
@@ -337,267 +694,77 @@ class Bid(models.Model):
     )
     
     class Meta:
-        ordering = ['-amount', '-created_at']
         verbose_name = 'Ставка'
         verbose_name_plural = 'Ставки'
-        
-    def __str__(self):
-        return f"{self.user.username} - {self.amount} TJS на {self.pigeon.title}"
-
-
-class Comment(models.Model):
-    """Model for pigeon Q&A comments"""
-    pigeon = models.ForeignKey(
-        'Pigeon',
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='Голубь'
-    )
-    
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='Автор'
-    )
-    
-    text = models.TextField(
-        verbose_name='Вопрос/Комментарий',
-        help_text='Ваш вопрос о голубе'
-    )
-    
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    
-    class Meta:
-        ordering = ['created_at']
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
-        
-    def __str__(self):
-        return f"{self.user.username}: {self.text[:50]}..."
-
-
-class UserProfile(models.Model):
-    """Extended user profile for additional fields"""
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='profile',
-        verbose_name='Пользователь'
-    )
-    
-    telegram_chat_id = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name='Telegram Chat ID',
-        help_text='ID для уведомлений в Telegram (получите у @userinfobot)'
-    )
-    
-    class Meta:
-        verbose_name = 'Профиль пользователя'
-        verbose_name_plural = 'Профили пользователей'
-    
-    def __str__(self):
-        return f"Profile of {self.user.username}"
-
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Automatically create profile when user is created"""
-    if created:
-        UserProfile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Save profile when user is saved"""
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
-
-
-class Review(models.Model):
-    """
-    User review/rating model for sellers
-    """
-    RATING_CHOICES = [
-        (1, '⭐ 1 - Очень плохо'),
-        (2, '⭐⭐ 2 - Плохо'),
-        (3, '⭐⭐⭐ 3 - Нормально'),
-        (4, '⭐⭐⭐⭐ 4 - Хорошо'),
-        (5, '⭐⭐⭐⭐⭐ 5 - Отлично'),
-    ]
-    
-    seller = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='received_reviews',
-        verbose_name='Продавец'
-    )
-    
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='wrote_reviews',
-        verbose_name='Автор отзыва'
-    )
-    
-    rating = models.IntegerField(
-        choices=RATING_CHOICES,
-        verbose_name='Оценка'
-    )
-    
-    text = models.TextField(
-        blank=True,
-        verbose_name='Комментарий',
-        help_text='Опишите ваш опыт покупки'
-    )
-    
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    
-    class Meta:
-        verbose_name = 'Отзыв'
-        verbose_name_plural = 'Отзывы'
         ordering = ['-created_at']
-        # Constraint: One review per author-seller pair
-        unique_together = ['seller', 'author']
-        # Constraint: User cannot review themselves
-        constraints = [
-            models.CheckConstraint(
-                check=~models.Q(seller=models.F('author')),
-                name='no_self_review'
-            )
-        ]
     
     def __str__(self):
-        return f"{self.author.username} → {self.seller.username}: {self.rating}⭐"
-    
-    def get_stars_display(self):
-        """Return visual star representation"""
-        filled = '⭐' * self.rating
-        empty = '☆' * (5 - self.rating)
-        return filled + empty
+        return f"{self.bidder.username} - {self.amount} TJS"
 
 
-class PigeonImage(models.Model):
+class Veterinarian(models.Model):
     """
-    Model for storing multiple images for a single pigeon listing
-    Supports up to 5 images per pigeon for better presentation
+    Veterinary clinics and veterinarians directory
     """
-    pigeon = models.ForeignKey(
-        Pigeon,
-        on_delete=models.CASCADE,
-        related_name='images',
-        verbose_name='Голубь'
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Название / Имя',
+        help_text='Название клиники или имя ветеринара'
     )
     
-    image = models.ImageField(
-        upload_to='pigeon_images/',
-        verbose_name='Изображение'
+    photo = models.ImageField(
+        upload_to='veterinarians/',
+        verbose_name='Фото',
+        help_text='Фото клиники или врача'
     )
     
-    order = models.PositiveSmallIntegerField(
-        default=0,
-        verbose_name='Порядок',
-        help_text='Порядок отображения изображения (0 = первое)'
+    description = models.TextField(
+        verbose_name='Описание услуг',
+        help_text='Подробное описание предоставляемых услуг'
     )
     
-    uploaded_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата загрузки'
+    phone = models.CharField(
+        max_length=20,
+        verbose_name='Телефон',
+        help_text='Контактный номер телефона'
     )
     
-    class Meta:
-        verbose_name = 'Изображение голубя'
-        verbose_name_plural = 'Изображения голубей'
-        ordering = ['order', 'uploaded_at']
-    
-    def __str__(self):
-        return f"{self.pigeon.title} - Image {self.order + 1}"
-
-
-class HealthGuide(models.Model):
-    """
-    Model for Health Encyclopedia - guides for pigeon diseases and treatment
-    """
-    # Titles in both languages
-    title_ru = models.CharField(
-        max_length=255,
-        verbose_name='Название (RU)'
-    )
-    
-    title_tj = models.CharField(
-        max_length=255,
-        verbose_name='Название (TJ)'
-    )
-    
-    # Descriptions
-    description_ru = models.TextField(
-        verbose_name='Описание (RU)',
-        help_text='Краткое описание заболевания'
-    )
-    
-    description_tj = models.TextField(
-        verbose_name='Описание (TJ)',
-        help_text='Краткое описание заболевания'
-    )
-    
-    # Symptoms
-    symptoms_ru = models.TextField(
-        verbose_name='Симптомы (RU)',
-        help_text='Описание симптомов заболевания'
-    )
-    
-    symptoms_tj = models.TextField(
-        verbose_name='Симптомы (TJ)',
-        help_text='Описание симптомов заболевания'
-    )
-    
-    # Treatment
-    treatment_ru = models.TextField(
-        verbose_name='Лечение (RU)',
-        help_text='Методы и рекомендации по лечению'
-    )
-    
-    treatment_tj = models.TextField(
-        verbose_name='Лечение (TJ)',
-        help_text='Методы и рекомендации по лечению'
-    )
-    
-    # Image
-    image = models.ImageField(
-        upload_to='health_guides/',
-        verbose_name='Изображение',
-        help_text='Главное изображение для статьи'
-    )
-    
-    # YouTube video (optional)
-    youtube_url = models.URLField(
-        max_length=500,
+    whatsapp_number = models.CharField(
+        max_length=20,
         blank=True,
-        null=True,
-        verbose_name='YouTube видео',
-        help_text='Ссылка на видео (например: https://www.youtube.com/watch?v=VIDEO_ID)'
+        verbose_name='WhatsApp',
+        help_text='Номер WhatsApp'
     )
     
-    # Slug for URLs
-    slug = models.SlugField(
-        max_length=255,
-        unique=True,
-        verbose_name='URL slug',
-        help_text='Будет создан автоматически из названия'
+    city = models.CharField(
+        max_length=50,
+        choices=Animal.CITY_CHOICES,
+        default='dushanbe',
+        verbose_name='Город',
+        help_text='Город расположения'
     )
     
-    # Timestamps
+    address = models.CharField(
+        max_length=300,
+        verbose_name='Адрес',
+        help_text='Полный адрес клиники'
+    )
+    
+    is_vip = models.BooleanField(
+        default=False,
+        verbose_name='VIP размещение',
+        help_text='Премиум размещение с выделением'
+    )
+    
+    is_approved = models.BooleanField(
+        default=False,
+        verbose_name='Одобрено',
+        help_text='Запись прошла модерацию'
+    )
+    
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Дата создания'
+        verbose_name='Дата добавления'
     )
     
     updated_at = models.DateTimeField(
@@ -606,37 +773,254 @@ class HealthGuide(models.Model):
     )
     
     class Meta:
-        verbose_name = 'Статья о здоровье'
-        verbose_name_plural = 'Энциклопедия лечения'
+        verbose_name = 'Ветеринар / Ветклиника'
+        verbose_name_plural = 'Ветеринары и Ветклиники'
+        ordering = ['-is_vip', '-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({self.city})"
+
+
+# Keep existing models that don't need changes
+class UserProfile(models.Model):
+    """User profile with additional information"""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        verbose_name='Пользователь'
+    )
+    
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Телефон'
+    )
+    
+    telegram_chat_id = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name='Telegram Chat ID'
+    )
+    
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=5.00,
+        verbose_name='Рейтинг'
+    )
+    
+    total_sales = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Всего продаж'
+    )
+    
+    is_verified = models.BooleanField(
+        default=False,
+        verbose_name='Верифицирован',
+        help_text='Синяя галочка - доверенный продавец'
+    )
+    
+    balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name=_('Баланс кошелька'),
+        help_text=_('Баланс внутреннего кошелька в сомони (TJS)')
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата регистрации'
+    )
+    
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+    
+    def __str__(self):
+        return f"Профиль {self.user.username}"
+    
+    def deduct_balance(self, amount):
+        """
+        Списать средства со счета пользователя.
+        Создает запись в Transaction.
+        
+        Args:
+            amount: Decimal - сумма к списанию
+            
+        Raises:
+            ValueError: Если недостаточно средств
+        """
+        amount = Decimal(str(amount))
+        
+        if self.balance < amount:
+            raise ValueError(
+                f"Недостаточно средств. Баланс: {self.balance} TJS, "
+                f"требуется: {amount} TJS"
+            )
+        
+        self.balance -= amount
+        self.save()
+        
+        # Создаем запись в Transaction
+        Transaction.objects.create(
+            user=self.user,
+            amount=amount,
+            transaction_type='deduct',
+            description='Списание со счета'
+        )
+    
+    def add_balance(self, amount, description="Пополнение баланса"):
+        """
+        Пополнить баланс кошелька.
+        
+        Args:
+            amount: Decimal - сумма пополнения
+            description: str - описание пополнения
+        """
+        amount = Decimal(str(amount))
+        self.balance += amount
+        self.save()
+        
+        # Создаем запись в Transaction
+        Transaction.objects.create(
+            user=self.user,
+            amount=amount,
+            transaction_type='add',
+            description=description
+        )
+
+
+class Transaction(models.Model):
+    """
+    История транзакций для кошелька пользователя.
+    Отслеживает все операции: пополнения, списания, платежи.
+    """
+    TRANSACTION_TYPE_CHOICES = [
+        ('add', _('Пополнение')),
+        ('deduct', _('Списание')),
+        ('payment', _('Платеж')),
+        ('refund', _('Возврат')),
+    ]
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='transactions',
+        verbose_name=_('Пользователь')
+    )
+    
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Сумма')
+    )
+    
+    transaction_type = models.CharField(
+        max_length=20,
+        choices=TRANSACTION_TYPE_CHOICES,
+        verbose_name=_('Тип транзакции')
+    )
+    
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_('Описание'),
+        help_text=_('Краткое описание причины транзакции')
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата')
+    )
+    
+    class Meta:
+        verbose_name = _('Транзакция')
+        verbose_name_plural = _('Транзакции')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_transaction_type_display()} - {self.user.username} - {self.amount} TJS ({self.created_at.strftime('%d.%m.%Y')})"
+
+
+class Review(models.Model):
+    """Reviews for sellers"""
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_reviews',
+        verbose_name='Продавец'
+    )
+    
+    buyer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='given_reviews',
+        verbose_name='Покупатель'
+    )
+    
+    rating = models.PositiveSmallIntegerField(
+        verbose_name='Оценка',
+        help_text='От 1 до 5'
+    )
+    
+    comment = models.TextField(
+        verbose_name='Комментарий'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата отзыва'
+    )
+    
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['seller', 'buyer'],
+                name='no_self_review'
+            )
+        ]
+    
+    def __str__(self):
+        return f"Отзыв от {self.buyer.username} для {self.seller.username}"
+
+
+class Comment(models.Model):
+    """Comments on animal listings"""
+    animal = models.ForeignKey(
+        Animal,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Животное'
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
+    
+    text = models.TextField(
+        verbose_name='Комментарий'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.title_ru
-    
-    def get_absolute_url(self):
-        return reverse('health_detail', kwargs={'slug': self.slug})
-    
-    def get_youtube_embed_url(self):
-        """
-        Convert regular YouTube URL to embed URL for iframe
-        Supports formats:
-        - https://www.youtube.com/watch?v=VIDEO_ID
-        - https://youtu.be/VIDEO_ID
-        """
-        if not self.youtube_url:
-            return None
-        
-        video_id = None
-        
-        # Handle youtube.com/watch?v= format
-        if 'youtube.com/watch?v=' in self.youtube_url:
-            video_id = self.youtube_url.split('watch?v=')[1].split('&')[0]
-        # Handle youtu.be/ format
-        elif 'youtu.be/' in self.youtube_url:
-            video_id = self.youtube_url.split('youtu.be/')[1].split('?')[0]
-        
-        if video_id:
-            return f'https://www.youtube.com/embed/{video_id}'
-        
-        return None
-
+        return f"Комментарий от {self.author.username}"

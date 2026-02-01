@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Регистрация - ГолубБозор{% endblock %}
+{% block title %}Регистрация - ЗооБозор{% endblock %}
 
 {% block content %}
 <div class="max-w-md mx-auto">
     <div class="text-center mb-8">
         <h1 class="text-4xl font-bold gold-text mb-2">Регистрация</h1>
-        <p class="text-gray-400">Присоединяйтесь к премиум-рынку голубей</p>
+        <p class="text-gray-400">Присоединяйтесь к премиум-рынку животных</p>
     </div>
     
     <div class="bg-[#1E1E1E] rounded-lg p-8 border border-gray-800">
@@ -34,6 +34,21 @@
                 {{ form.email }}
                 {% if form.email.errors %}
                     <p class="text-red-500 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                {% else %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.email.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Phone -->
+            <div>
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    Телефон
+                </label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                {% else %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.phone.help_text }}</p>
                 {% endif %}
             </div>
             
@@ -61,6 +76,18 @@
                 {% endif %}
             </div>
             
+            <!-- 🆕 Согласие с условиями -->
+            <div class="flex items-start space-x-3 p-4 bg-[#2A2A2A] rounded-lg border border-gray-700">
+                {{ form.terms_confirmed }}
+                <label for="{{ form.terms_confirmed.id_for_label }}" class="text-sm text-gray-300 cursor-pointer">
+                    {{ form.terms_confirmed.label }}
+                    <a href="#" class="text-[#D4AF37] hover:underline">Правила пользования</a>
+                </label>
+            </div>
+            {% if form.terms_confirmed.errors %}
+                <p class="text-red-500 text-sm -mt-4">{{ form.terms_confirmed.errors.0 }}</p>
+            {% endif %}
+            
             <!-- Non-field errors -->
             {% if form.non_field_errors %}
                 <div class="p-4 bg-red-900 border border-red-700 rounded-lg">
@@ -84,3 +111,4 @@
     </div>
 </div>
 {% endblock %}
+

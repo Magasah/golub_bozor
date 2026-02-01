@@ -1,37 +1,66 @@
 """
-Admin configuration for GolubBozor
+Admin configuration for ZooBozor with Django Unfold
 """
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Pigeon, Bid, Comment, UserProfile, Review, PigeonImage, HealthGuide
+from django.http import HttpResponseRedirect
+from django.urls import path
+from django.shortcuts import render
+from unfold.admin import ModelAdmin
+from unfold.decorators import display
+from .models import Animal, Bid, Comment, UserProfile, Review, AnimalImage, Veterinarian, Offer, Transaction
+from django import forms
+from decimal import Decimal
 
 
-class PigeonImageInline(admin.TabularInline):
+class TopUpForm(forms.Form):
+    """Форма для пополнения баланса пользователя"""
+    amount = forms.DecimalField(
+        label='Сумма пополнения (TJS)',
+        min_value=Decimal('0.01'),
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': '100.00'
+        })
+    )
+    description = forms.CharField(
+        label='Описание (опционально)',
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Причина пополнения'
+        })
+    )
+
+
+class AnimalImageInline(admin.TabularInline):
     """
-    Inline admin for multiple pigeon images
+    Inline admin for multiple animal images
     """
-    model = PigeonImage
+    model = AnimalImage
     extra = 1
     max_num = 5
-    fields = ['image', 'order']
+    fields = ['image']
     readonly_fields = ['uploaded_at']
 
 
-@admin.register(Pigeon)
-class PigeonAdmin(admin.ModelAdmin):
+@admin.register(Animal)
+class AnimalAdmin(ModelAdmin):
     """
-    Admin interface for Pigeon model
-    Supports multiple images via inline
-    Shows payment receipt as image preview
+    Admin interface for Animal model with Unfold
     """
-    list_display = ['title', 'breed', 'sex', 'price', 'owner', 'is_approved', 'is_vip', 'listing_type', 'is_paid', 'payment_receipt_preview', 'current_price', 'is_sold', 'created_at']
-    list_filter = ['is_approved', 'is_vip', 'listing_type', 'is_paid', 'is_sold', 'breed', 'sex', 'game_type', 'created_at']
-    search_fields = ['title', 'description', 'phone', 'owner__username']
+    list_display = ['title', 'category', 'breed', 'gender', 'age', 'price', 'owner', 'is_approved', 'is_vip', 'listing_type', 'is_paid', 'payment_receipt_preview', 'current_price', 'is_sold', 'created_at']
+    list_filter = ['is_approved', 'is_vip', 'listing_type', 'is_paid', 'is_sold', 'category', 'gender', 'city', 'created_at']
+    list_filter_submit = True  # Unfold feature: Submit button for filters
+    search_fields = ['title', 'description', 'phone', 'owner__username', 'breed']
     list_editable = ['is_approved', 'is_vip', 'is_paid']
     date_hierarchy = 'created_at'
     readonly_fields = ['created_at', 'updated_at', 'payment_receipt_display']
-    inlines = [PigeonImageInline]
+    inlines = [AnimalImageInline]
+    list_per_page = 25  # Pagination
     
+    @display(description='🧾 Чек', ordering='payment_receipt')
     def payment_receipt_preview(self, obj):
         """Display payment receipt as small thumbnail in list view"""
         if obj.payment_receipt:
@@ -41,8 +70,8 @@ class PigeonAdmin(admin.ModelAdmin):
                 obj.payment_receipt.url
             )
         return '-'
-    payment_receipt_preview.short_description = '🧾 Чек'
     
+    @display(description='🧾 Чек оплаты (Превью)')
     def payment_receipt_display(self, obj):
         """Display payment receipt as large image in detail view"""
         if obj.payment_receipt:
@@ -53,11 +82,10 @@ class PigeonAdmin(admin.ModelAdmin):
                 obj.payment_receipt.url
             )
         return format_html('<span style="color: #999;">Чек не загружен</span>')
-    payment_receipt_display.short_description = '🧾 Чек оплаты (Превью)'
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('title', 'breed', 'game_type', 'sex', 'price', 'description')
+            'fields': ('title', 'category', 'breed', 'gender', 'age', 'price', 'description', 'city')
         }),
         ('Тип продажи', {
             'fields': ('listing_type', 'start_price', 'current_price')
@@ -74,7 +102,7 @@ class PigeonAdmin(admin.ModelAdmin):
             'fields': ('phone', 'whatsapp_number', 'telegram_username')
         }),
         ('Медиа', {
-            'fields': ('image', 'video_url')
+            'fields': ('main_photo', 'video_url')
         }),
         ('Владелец и статус', {
             'fields': ('owner', 'is_approved', 'is_vip')
@@ -85,95 +113,207 @@ class PigeonAdmin(admin.ModelAdmin):
         }),
     )
     
-    actions = ['approve_pigeons', 'disapprove_pigeons', 'make_vip', 'approve_payment']
+    actions = ['approve_animals', 'disapprove_animals', 'make_vip', 'approve_payment']
     
+    @display(description='✅ Подтвердить оплату аукциона')
     def approve_payment(self, request, queryset):
         """Approve payment for auction listings"""
         updated = queryset.filter(listing_type='auction').update(is_paid=True)
         self.message_user(request, f'{updated} аукцион(ов) отмечено как оплачено')
-    approve_payment.short_description = '✅ Подтвердить оплату аукциона'
     
-    def approve_pigeons(self, request, queryset):
-        """Approve selected pigeons"""
+    @display(description='✅ Одобрить выбранные объявления')
+    def approve_animals(self, request, queryset):
+        """Approve selected animals"""
         updated = queryset.update(is_approved=True)
         self.message_user(request, f'{updated} объявлений одобрено.')
-    approve_pigeons.short_description = '✅ Одобрить выбранные объявления'
     
-    def disapprove_pigeons(self, request, queryset):
-        """Disapprove selected pigeons"""
+    @display(description='❌ Снять с публикации')
+    def disapprove_animals(self, request, queryset):
+        """Disapprove selected animals"""
         updated = queryset.update(is_approved=False)
         self.message_user(request, f'{updated} объявлений снято с публикации.')
-    disapprove_pigeons.short_description = '❌ Снять с публикации'
     
+    @display(description='⭐ Сделать VIP')
     def make_vip(self, request, queryset):
-        """Make selected pigeons VIP"""
+        """Make selected animals VIP"""
         updated = queryset.update(is_vip=True)
         self.message_user(request, f'{updated} объявлений получили VIP статус.')
-    make_vip.short_description = '⭐ Сделать VIP'
 
 
 @admin.register(Bid)
-class BidAdmin(admin.ModelAdmin):
+class BidAdmin(ModelAdmin):
     """
     Admin interface for Bid model
     """
-    list_display = ['pigeon', 'user', 'amount', 'created_at']
-    list_filter = ['created_at', 'pigeon']
-    search_fields = ['user__username', 'pigeon__title']
+    list_display = ['animal', 'bidder', 'amount', 'created_at']
+    list_filter = ['created_at', 'animal']
+    search_fields = ['bidder__username', 'animal__title']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('pigeon', 'user')
+        return super().get_queryset(request).select_related('animal', 'bidder')
 
 
 @admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
+class CommentAdmin(ModelAdmin):
     """
     Admin interface for Comment model
     """
-    list_display = ['user', 'pigeon', 'text_preview', 'created_at']
-    list_filter = ['created_at', 'pigeon']
-    search_fields = ['user__username', 'pigeon__title', 'text']
+    list_display = ['author', 'animal', 'text_preview', 'created_at']
+    list_filter = ['created_at', 'animal']
+    list_filter_submit = True
+    search_fields = ['author__username', 'animal__title', 'text']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
     
+    @display(description='Текст')
     def text_preview(self, obj):
         """Show first 50 characters of text"""
         return obj.text[:50] + '...' if len(obj.text) > 50 else obj.text
-    text_preview.short_description = 'Текст'
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('pigeon', 'user')
+        return super().get_queryset(request).select_related('animal', 'author')
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(ModelAdmin):
     """
     Admin interface for UserProfile model
     """
-    list_display = ['user', 'telegram_chat_id']
-    search_fields = ['user__username', 'telegram_chat_id']
-    readonly_fields = ['user']
+    list_display = ['user', 'balance_display', 'rating', 'total_sales', 'is_verified', 'created_at']
+    search_fields = ['user__username', 'user__email', 'telegram_chat_id']
+    readonly_fields = ['user', 'created_at', 'balance_display']
+    list_filter = ['is_verified', 'created_at']
+    list_filter_submit = True
+    
+    fieldsets = (
+        ('Информация о пользователе', {
+            'fields': ('user', 'phone', 'telegram_chat_id', 'created_at')
+        }),
+        ('Кошелек', {
+            'fields': ('balance_display',),
+            'description': 'Текущий баланс внутреннего кошелька'
+        }),
+        ('Статус продавца', {
+            'fields': ('rating', 'total_sales', 'is_verified')
+        }),
+    )
+    
+    actions = ['top_up_balance']
+    
+    @display(description='💰 Баланс')
+    def balance_display(self, obj):
+        """Показать баланс с форматированием"""
+        return format_html(
+            '<span style="font-size: 16px; font-weight: bold; color: #D4AF37;">{} TJS</span>',
+            obj.balance
+        )
+    
+    @display(description='💳 Пополнить баланс')
+    def top_up_balance(self, request, queryset):
+        """Экшен для пополнения баланса пользователя"""
+        # Переносим в специальное представление для обработки
+        selected_ids = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        if len(selected_ids) != 1:
+            self.message_user(request, '❌ Выберите ровно одного пользователя для пополнения баланса')
+            return
+        
+        return HttpResponseRedirect(f'/admin/core/userprofile/{selected_ids[0]}/topup/')
+    
+    def get_urls(self):
+        """Добавляем URL для пополнения баланса"""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<int:profile_id>/topup/',
+                self.admin_site.admin_view(self.topup_view),
+                name='userprofile_topup',
+            ),
+        ]
+        return custom_urls + urls
+    
+    def topup_view(self, request, profile_id):
+        """Представление для пополнения баланса"""
+        profile = UserProfile.objects.get(id=profile_id)
+        
+        if request.method == 'POST':
+            form = TopUpForm(request.POST)
+            if form.is_valid():
+                amount = form.cleaned_data['amount']
+                description = form.cleaned_data['description'] or 'Пополнение баланса администратором'
+                
+                try:
+                    profile.add_balance(amount, description)
+                    self.message_user(
+                        request,
+                        f'✅ Баланс пользователя {profile.user.username} пополнен на {amount} TJS. Новый баланс: {profile.balance} TJS'
+                    )
+                    return HttpResponseRedirect('/admin/core/userprofile/')
+                except Exception as e:
+                    self.message_user(request, f'❌ Ошибка: {str(e)}')
+        else:
+            form = TopUpForm()
+        
+        context = {
+            'title': f'Пополнение баланса - {profile.user.username}',
+            'form': form,
+            'profile': profile,
+            'opts': UserProfile._meta,
+        }
+        return render(request, 'admin/topup_form.html', context)
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
 
 
+@admin.register(Transaction)
+class TransactionAdmin(ModelAdmin):
+    """
+    Admin interface for Transaction model (wallet history)
+    """
+    list_display = ['user', 'amount', 'transaction_type', 'description', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    list_filter_submit = True
+    search_fields = ['user__username', 'user__email', 'description']
+    readonly_fields = ['user', 'created_at']
+    
+    fieldsets = (
+        ('Информация о транзакции', {
+            'fields': ('user', 'amount', 'transaction_type', 'created_at')
+        }),
+        ('Описание', {
+            'fields': ('description',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        """Не позволяем вручную создавать транзакции"""
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        """Не позволяем удалять историю транзакций"""
+        return False
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user').order_by('-created_at')
+
+
 @admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
+class ReviewAdmin(ModelAdmin):
     """
     Admin interface for Review model
     """
-    list_display = ['seller', 'author', 'rating', 'text_preview', 'created_at']
+    list_display = ['seller', 'buyer', 'rating', 'text_preview', 'created_at']
     list_filter = ['rating', 'created_at']
-    search_fields = ['seller__username', 'author__username', 'text']
+    list_filter_submit = True
+    search_fields = ['seller__username', 'buyer__username', 'text']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
     
     fieldsets = (
         ('Информация об отзыве', {
-            'fields': ('seller', 'author', 'rating')
+            'fields': ('seller', 'buyer', 'rating')
         }),
         ('Комментарий', {
             'fields': ('text',)
@@ -183,105 +323,128 @@ class ReviewAdmin(admin.ModelAdmin):
         }),
     )
     
+    @display(description='Текст отзыва')
     def text_preview(self, obj):
         """Show first 60 characters of text"""
         if obj.text:
             return obj.text[:60] + '...' if len(obj.text) > 60 else obj.text
         return '(Без комментария)'
-    text_preview.short_description = 'Текст отзыва'
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('seller', 'author')
+        return super().get_queryset(request).select_related('seller', 'buyer')
 
-@admin.register(HealthGuide)
-class HealthGuideAdmin(admin.ModelAdmin):
+
+@admin.register(Veterinarian)
+class VeterinarianAdmin(ModelAdmin):
     """
-    Admin interface for Health Encyclopedia
-    Automatically generates slug from Russian title
+    Admin interface for Veterinarian directory
     """
-    list_display = ['title_ru', 'title_tj', 'image_preview', 'has_video', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['title_ru', 'title_tj', 'description_ru', 'description_tj']
-    readonly_fields = ['slug', 'created_at', 'updated_at', 'image_display', 'video_preview']
+    list_display = ['name', 'city', 'phone', 'is_approved', 'is_vip', 'created_at']
+    list_filter = ['city', 'is_approved', 'is_vip', 'created_at']
+    search_fields = ['name', 'city', 'description', 'address']
+    readonly_fields = ['created_at', 'updated_at', 'photo_display']
+    list_editable = ['is_approved', 'is_vip']
     
     fieldsets = (
-        ('🇷🇺 Контент (Русский)', {
-            'fields': ('title_ru', 'description_ru', 'symptoms_ru', 'treatment_ru')
+        ('Основная информация', {
+            'fields': ('name', 'city', 'address')
         }),
-        ('🇹🇯 Контент (Таджикский)', {
-            'fields': ('title_tj', 'description_tj', 'symptoms_tj', 'treatment_tj')
+        ('Описание услуг', {
+            'fields': ('description',)
         }),
-        ('📸 Медиа', {
-            'fields': ('image', 'image_display', 'youtube_url', 'video_preview')
+        ('Контакты', {
+            'fields': ('phone', 'whatsapp_number')
         }),
-        ('⚙️ Технические данные', {
-            'fields': ('slug', 'created_at', 'updated_at'),
+        ('Медиа', {
+            'fields': ('photo', 'photo_display')
+        }),
+        ('Статус', {
+            'fields': ('is_approved', 'is_vip')
+        }),
+        ('Даты', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
     
+    @display(description='Фото')
+    def photo_display(self, obj):
+        """Display image in detail view"""
+        if obj.photo:
+            return format_html(
+                '<img src="{}" style="max-width: 400px; border: 3px solid #D4AF37; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" />',
+                obj.photo.url
+            )
+        return 'Нет фото'
+    
+    actions = ['approve_veterinarians', 'make_vip']
+    
+    @display(description='✅ Одобрить')
+    def approve_veterinarians(self, request, queryset):
+        """Approve selected veterinarians"""
+        updated = queryset.update(is_approved=True)
+        self.message_user(request, f'{updated} ветеринаров одобрено.')
+    
+    @display(description='⭐ Сделать VIP')
+    def make_vip(self, request, queryset):
+        """Make selected veterinarians VIP"""
+        updated = queryset.update(is_vip=True)
+        self.message_user(request, f'{updated} ветеринаров получили VIP статус.')
+
+
+# Регистрация AnimalImage отдельно для управления
+@admin.register(AnimalImage)
+class AnimalImageAdmin(ModelAdmin):
+    list_display = ['animal', 'image_preview', 'uploaded_at']
+    list_filter = ['uploaded_at']
+    search_fields = ['animal__title']
+    ordering = ['animal', '-uploaded_at']
+    
+    @display(description='Превью')
     def image_preview(self, obj):
-        """Display thumbnail in list view"""
         if obj.image:
             return format_html(
-                '<img src="{}" width="60" height="60" style="object-fit: cover; border: 2px solid #D4AF37; border-radius: 8px;" />',
+                '<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 4px;" />',
                 obj.image.url
             )
         return '-'
-    image_preview.short_description = '🖼️'
+
+
+@admin.register(Offer)
+class OfferAdmin(ModelAdmin):
+    """
+    Admin interface for price offers
+    """
+    list_display = ['animal', 'buyer', 'price', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    list_filter_submit = True
+    search_fields = ['animal__title', 'buyer__username']
+    readonly_fields = ['created_at']
+    list_editable = ['status']
     
-    def image_display(self, obj):
-        """Display large image in detail view"""
-        if obj.image:
-            return format_html(
-                '<img src="{}" style="max-width: 600px; border: 3px solid #D4AF37; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" />',
-                obj.image.url
-            )
-        return '-'
-    image_display.short_description = 'Изображение (превью)'
+    fieldsets = (
+        ('Информация о предложении', {
+            'fields': ('animal', 'buyer', 'price', 'status')
+        }),
+        ('Сообщение', {
+            'fields': ('message',)
+        }),
+        ('Даты', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
     
-    def has_video(self, obj):
-        """Show if guide has YouTube video"""
-        if obj.youtube_url:
-            return format_html('<span style="color: green; font-weight: bold;">✓ Да</span>')
-        return format_html('<span style="color: gray;">✗ Нет</span>')
-    has_video.short_description = '🎥 Видео'
+    actions = ['accept_offers', 'reject_offers']
     
-    def video_preview(self, obj):
-        """Show YouTube video preview in admin"""
-        embed_url = obj.get_youtube_embed_url()
-        if embed_url:
-            return format_html(
-                '<iframe width="560" height="315" src="{}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border: 3px solid #D4AF37; border-radius: 12px;"></iframe><br><br><a href="{}" target="_blank" style="color: #D4AF37; font-weight: bold;">🔗 Открыть на YouTube</a>',
-                embed_url,
-                obj.youtube_url
-            )
-        return '-'
-    video_preview.short_description = 'Видео (превью)'
+    @display(description='✅ Принять предложения')
+    def accept_offers(self, request, queryset):
+        """Accept selected offers"""
+        updated = queryset.update(status='accepted')
+        self.message_user(request, f'{updated} предложений принято.')
     
-    def save_model(self, request, obj, form, change):
-        """Auto-generate slug from Russian title if not set"""
-        if not obj.slug:
-            from django.utils.text import slugify
-            from transliterate import translit
-            
-            # Transliterate Russian title to Latin for URL-friendly slug
-            try:
-                # Try to transliterate (requires transliterate package)
-                base_slug = translit(obj.title_ru, 'ru', reversed=True)
-            except:
-                # Fallback to simple slugify if transliterate not available
-                base_slug = obj.title_ru
-            
-            slug = slugify(base_slug)
-            
-            # Ensure unique slug
-            counter = 1
-            unique_slug = slug
-            while HealthGuide.objects.filter(slug=unique_slug).exists():
-                unique_slug = f'{slug}-{counter}'
-                counter += 1
-            
-            obj.slug = unique_slug
-        
-        super().save_model(request, obj, form, change)
+    @display(description='❌ Отклонить предложения')
+    def reject_offers(self, request, queryset):
+        """Reject selected offers"""
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} предложений отклонено.')

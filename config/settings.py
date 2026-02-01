@@ -5,6 +5,7 @@ Django settings for GolubBozor project.
 from pathlib import Path
 import os
 import dj_database_url
+from django.utils.translation import gettext_lazy as _
 
 # Загрузка переменных окружения из .env файла (для локальной разработки)
 from dotenv import load_dotenv
@@ -42,6 +43,8 @@ if ON_PYTHONANYWHERE:
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',  # 🎨 Modern admin interface (must be before django.contrib.admin)
+    'unfold.contrib.filters',  # Advanced filters for admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Для мультиязычности (i18n)
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -78,6 +82,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'core.context_processors.get_holiday_theme',  # Праздничные темы
+                'core.context_processors.site_context',  # Общий контекст сайта
             ],
         },
     },
@@ -104,9 +110,16 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'email', 'first_name', 'last_name'),
+            'max_similarity': 0.7,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -120,7 +133,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru'
+
+LANGUAGES = [
+    ('ru', _('Русский')),
+    ('tg', _('Тоҷикӣ')),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 TIME_ZONE = 'Asia/Dushanbe'
 
@@ -185,3 +207,315 @@ if not DEBUG and SECURE_SSL_REDIRECT:
     SECURE_HSTS_SECONDS = 31536000  # 1 год
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+
+# ========== EMAIL CONFIGURATION (для восстановления пароля) ==========
+# Настройки SMTP для отправки писем
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Gmail SMTP (пример - замените на свои данные)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')  # Ваш email
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Пароль приложения
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Для тестирования (отображает письма в консоли вместо отправки)
+if DEBUG and not EMAIL_HOST_USER:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# ========== PASSWORD RESET SETTINGS ==========
+# URLs для восстановления пароля
+PASSWORD_RESET_TIMEOUT = 3600  # Ссылка действительна 1 час (3600 секунд)
+
+
+# ========== JAZZMIN ADMIN THEME SETTINGS ==========
+JAZZMIN_SETTINGS = {
+    # Заголовки
+    "site_title": "ЗооБозор Admin",
+    "site_header": "ЗооБозор",
+    "site_brand": "🦁 ЗооБозор",
+    "site_logo": None,  # Путь к логотипу (опционально)
+    "login_logo": None,
+    "site_icon": None,
+    
+    # Welcome text на главной
+    "welcome_sign": "Добро пожаловать в админ-панель ЗооБозор",
+    
+    # Copyright
+    "copyright": "ЗооБозор © 2024",
+    
+    # Поиск в админке
+    "search_model": ["core.Animal", "auth.User"],
+    
+    # Темная тема
+    "theme": "darkly",
+    
+    # Показывать UI Builder
+    "show_ui_builder": False,
+    
+    # Sidebar
+    "show_sidebar": True,
+    "navigation_expanded": False,
+    
+    # Top Menu
+    "topmenu_links": [
+        {"name": "Главная страница", "url": "/", "new_window": False},
+        {"name": "Поддержка", "url": "https://t.me/Magasah", "new_window": True},
+    ],
+    
+    # User Menu
+    "usermenu_links": [
+        {"model": "auth.user"}
+    ],
+    
+    # Иконки для моделей
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "core.Animal": "fas fa-paw",
+        "core.AnimalImage": "fas fa-images",
+        "core.UserProfile": "fas fa-id-card",
+        "core.Review": "fas fa-star",
+        "core.Comment": "fas fa-comments",
+        "core.Bid": "fas fa-gavel",
+        "core.Veterinarian": "fas fa-user-md",
+    },
+    
+    # Порядок отображения приложений
+    "order_with_respect_to": [
+        "core",
+        "core.animal",
+        "core.userprofile",
+        "auth",
+    ],
+    
+    # Кастомные ссылки
+    "custom_links": {
+        "core": [{
+            "name": "Статистика", 
+            "url": "/admin/",
+            "icon": "fas fa-chart-line",
+        }]
+    },
+    
+    # Hide apps/models
+    "hide_apps": [],
+    "hide_models": [],
+    
+    # Related modal
+    "related_modal_active": True,
+    
+    # Custom CSS/JS
+    "custom_css": None,
+    "custom_js": None,
+    
+    # Формат changeform
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs",
+    },
+}
+
+# UI Tweaks для кастомизации стилей
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-warning",  # Золотой акцент
+    "navbar": "navbar-dark navbar-dark",
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-warning",  # Темная sidebar с золотым
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": True,
+    "theme": "darkly",  # Темная тема
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
+}
+
+# ========================================
+# DJANGO UNFOLD CONFIGURATION
+# ========================================
+UNFOLD = {
+    "SITE_TITLE": "ZooBozor Admin",
+    "SITE_HEADER": "ZooBozor Control Panel",
+    "SITE_URL": "/",
+    "SITE_ICON": {
+        "light": lambda request: "🐾",
+        "dark": lambda request: "🐾",
+    },
+    
+    # Sidebar navigation
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Главная",
+                "items": [
+                    {
+                        "title": "Сайт",
+                        "icon": "home",
+                        "link": "/",
+                    },
+                    {
+                        "title": "Dashboard",
+                        "icon": "dashboard",
+                        "link": "/admin/",
+                    },
+                ],
+            },
+            {
+                "title": "Управление контентом",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Животные",
+                        "icon": "pets",
+                        "link": lambda request: "/admin/core/animal/",
+                    },
+                    {
+                        "title": "Зоо-Такси",
+                        "icon": "local_shipping",
+                        "link": lambda request: "/admin/core/animal/?category__exact=transport",
+                    },
+                    {
+                        "title": "Предложения цен",
+                        "icon": "attach_money",
+                        "link": lambda request: "/admin/core/offer/",
+                    },
+                    {
+                        "title": "Ставки (Аукцион)",
+                        "icon": "gavel",
+                        "link": lambda request: "/admin/core/bid/",
+                    },
+                    {
+                        "title": "Комментарии",
+                        "icon": "comment",
+                        "link": lambda request: "/admin/core/comment/",
+                    },
+                ],
+            },
+            {
+                "title": "Пользователи",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Пользователи",
+                        "icon": "person",
+                        "link": lambda request: "/admin/auth/user/",
+                    },
+                    {
+                        "title": "Группы",
+                        "icon": "group",
+                        "link": lambda request: "/admin/auth/group/",
+                    },
+                    {
+                        "title": "Профили",
+                        "icon": "account_circle",
+                        "link": lambda request: "/admin/core/userprofile/",
+                    },
+                ],
+            },
+            {
+                "title": "Финансы",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Платежи (Аукционы)",
+                        "icon": "payment",
+                        "link": lambda request: "/admin/core/animal/?is_paid__exact=1",
+                    },
+                    {
+                        "title": "VIP объявления",
+                        "icon": "star",
+                        "link": lambda request: "/admin/core/animal/?is_vip__exact=1",
+                    },
+                ],
+            },
+        ],
+    },
+    
+    # Colors (Black & Gold Theme)
+    "COLORS": {
+        "primary": {
+            "50": "#FFF9E5",
+            "100": "#FFF3CC",
+            "200": "#FFE799",
+            "300": "#FFDB66",
+            "400": "#F4CF33",
+            "500": "#D4AF37",  # Gold
+            "600": "#B5952F",
+            "700": "#967B27",
+            "800": "#77621F",
+            "900": "#584817",
+        },
+        "font": {
+            "subtle-light": "#666666",
+            "default-light": "#000000",
+            "important-light": "#000000",
+            "subtle-dark": "#999999",
+            "default-dark": "#CCCCCC",
+            "important-dark": "#FFFFFF",
+        },
+    },
+    
+    # Theme settings
+    "STYLES": [
+        lambda request: "css/unfold-custom.css",
+    ],
+    
+    "SCRIPTS": [],
+    
+    # Dashboard
+    "DASHBOARD_CALLBACK": None,
+    
+    # Extensions
+    "EXTENSIONS": {
+        "modeltranslation": {
+            "flags": {
+                "en": "🇬🇧",
+                "ru": "🇷🇺",
+                "tj": "🇹🇯",
+            },
+        },
+    },
+    
+    # Environment badge
+    "ENVIRONMENT": "config.settings.environment_callback",
+    
+    # Login customization
+    "LOGIN": {
+        "image": lambda request: "/static/img/logo.png",
+        "redirect_after": lambda request: "/admin/",
+    },
+}
+
+def environment_callback(request):
+    """Show environment badge in admin"""
+    if DEBUG:
+        return ["Development", "red"]
+    return ["Production", "green"]
+
+

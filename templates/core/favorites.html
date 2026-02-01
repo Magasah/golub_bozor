@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Избранное - ГолубБозор{% endblock %}
+{% block title %}Избранное - ЗооБозор{% endblock %}
 
 {% block content %}
 <div class="mb-8">
@@ -16,31 +16,31 @@
     </div>
 </div>
 
-{% if favorite_pigeons %}
+{% if favorite_animals %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for pigeon in favorite_pigeons %}
-    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if pigeon.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
+    {% for animal in favorite_animals %}
+    <div class="bg-[#1E1E1E] rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 {% if animal.is_vip %}border-4 border-[#D4AF37] shadow-lg shadow-[#D4AF37]/20{% else %}border border-gray-800{% endif %}">
         <!-- VIP Badge -->
-        {% if pigeon.is_vip %}
+        {% if animal.is_vip %}
         <div class="bg-[#D4AF37] text-black text-center py-1 font-semibold text-sm">
             ⭐ VIP ⭐
         </div>
         {% endif %}
         
         <!-- Image -->
-        <a href="{% url 'pigeon_detail' pigeon.pk %}">
+        <a href="{% url 'animal_detail' animal.pk %}">
             <div class="relative">
                 <img 
-                    src="{{ pigeon.image.url }}" 
-                    alt="{{ pigeon.title }}"
+                    src="{{ animal.main_photo.url }}" 
+                    alt="{{ animal.title }}"
                     class="w-full h-64 object-cover"
                 >
                 <!-- Favorite Badge -->
                 <div class="absolute top-2 right-2">
                     <button 
-                        onclick="toggleFavorite(event, {{ pigeon.pk }})" 
+                        onclick="toggleFavorite(event, {{ animal.pk }})" 
                         class="favorite-btn bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-black/90 transition"
-                        data-pigeon-id="{{ pigeon.pk }}"
+                        data-animal-id="{{ animal.pk }}"
                     >
                         <span class="text-2xl">❤️</span>
                     </button>
@@ -49,10 +49,10 @@
                 <!-- Breed & Sex Badge -->
                 <div class="absolute top-2 left-2 flex gap-2">
                     <span class="bg-black/70 text-[#D4AF37] px-2 py-1 rounded text-xs font-semibold">
-                        {{ pigeon.get_breed_display }}
+                        {{ animal.get_breed_display }}
                     </span>
                     <span class="bg-black/70 text-gray-300 px-2 py-1 rounded text-xs">
-                        {{ pigeon.get_sex_display }}
+                        {{ animal.get_sex_display }}
                     </span>
                 </div>
             </div>
@@ -60,29 +60,29 @@
         
         <!-- Content -->
         <div class="p-5">
-            <a href="{% url 'pigeon_detail' pigeon.pk %}">
+            <a href="{% url 'animal_detail' animal.pk %}">
                 <h3 class="text-xl font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">
-                    {{ pigeon.title }}
+                    {{ animal.title }}
                 </h3>
             </a>
             
             <p class="text-sm text-gray-500 mb-2">
-                {{ pigeon.get_game_type_display }}
+                {{ animal.get_game_type_display }}
             </p>
             
             <p class="text-gray-400 text-sm mb-4 line-clamp-2">
-                {{ pigeon.description|truncatewords:15 }}
+                {{ animal.description|truncatewords:15 }}
             </p>
             
             <!-- Price -->
             <div class="mb-4">
-                {% if pigeon.listing_type == 'auction' %}
+                {% if animal.listing_type == 'auction' %}
                 <div class="flex items-center gap-2 mb-1">
                     <span class="text-sm text-gray-400">Текущая ставка:</span>
                 </div>
-                <span class="text-3xl font-bold gold-text">{{ pigeon.current_price|default:pigeon.start_price }}</span>
+                <span class="text-3xl font-bold gold-text">{{ animal.current_price|default:animal.start_price }}</span>
                 {% else %}
-                <span class="text-3xl font-bold gold-text">{{ pigeon.price }}</span>
+                <span class="text-3xl font-bold gold-text">{{ animal.price }}</span>
                 {% endif %}
                 <span class="text-gray-400 ml-1">TJS</span>
             </div>
@@ -94,18 +94,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    {{ pigeon.city|default:"Не указан" }}
+                    {{ animal.city|default:"Не указан" }}
                 </div>
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {{ pigeon.created_at|date:"d.m.Y" }}
+                    {{ animal.created_at|date:"d.m.Y" }}
                 </div>
             </div>
             
             <!-- Action Button -->
-            <a href="{% url 'pigeon_detail' pigeon.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+            <a href="{% url 'animal_detail' animal.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
                 Подробнее →
             </a>
         </div>
@@ -129,13 +129,13 @@
 
 <!-- JavaScript для кнопки избранного -->
 <script>
-function toggleFavorite(event, pigeonId) {
+function toggleFavorite(event, animalId) {
     event.preventDefault();
     event.stopPropagation();
     
     const btn = event.currentTarget;
     
-    fetch(`/pigeon/${pigeonId}/favorite/`, {
+    fetch(`/animal/${animalId}/favorite/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
@@ -167,3 +167,4 @@ function toggleFavorite(event, pigeonId) {
 }
 </script>
 {% endblock %}
+

@@ -1,0 +1,46 @@
+<!-- Поля для транспорта (Зоо-Такси) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Тип транспорта -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            🚗 Тип транспорта *
+        </label>
+        <select 
+            name="transport_type"
+            required
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+        >
+            <option value="">Выберите тип</option>
+            <option value="sprinter">Спринтер</option>
+            <option value="porter">Портер</option>
+            <option value="sedan">Легковая</option>
+            <option value="minivan">Минивэн</option>
+        </select>
+    </div>
+    
+    <!-- Откуда -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            📍 Откуда
+        </label>
+        <input 
+            type="text" 
+            name="route_from"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Душанбе"
+        >
+    </div>
+    
+    <!-- Куда -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
+            🎯 Куда
+        </label>
+        <input 
+            type="text" 
+            name="route_to"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Худжанд"
+        >
+    </div>
+</div>

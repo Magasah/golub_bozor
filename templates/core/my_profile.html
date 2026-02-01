@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой профиль - ЗооБозор{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Profile Header -->
+    <div class="bg-gradient-to-r from-[#1E1E1E] to-[#2A2A2A] rounded-xl p-6 md:p-8 border border-gray-800 mb-6 shadow-xl">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+            <!-- Avatar -->
+            <div class="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-full flex items-center justify-center shadow-lg shadow-[#D4AF37]/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 md:h-20 md:w-20 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </div>
+            
+            <!-- User Info -->
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-3xl md:text-4xl font-bold gold-text mb-2">{{ user.username }}</h1>
+                <div class="flex flex-wrap gap-4 justify-center md:justify-start text-gray-400 text-sm">
+                    <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>На сайте с {{ user.date_joined|date:"F Y" }}</span>
+                    </div>
+                    {% if avg_rating %}
+                    <div class="flex items-center gap-1">
+                        <span class="text-[#D4AF37]">⭐</span>
+                        <span class="text-[#D4AF37] font-semibold">{{ avg_rating }}</span>
+                        <span>({{ review_count }} отзыв{{ review_count|pluralize:",,ов" }})</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-[#121212] px-4 py-3 rounded-lg border border-gray-700">
+                    <div class="text-2xl font-bold text-[#D4AF37]">{{ listings_count }}</div>
+                    <div class="text-xs text-gray-500">Объявлений</div>
+                </div>
+                <div class="bg-[#121212] px-4 py-3 rounded-lg border border-gray-700">
+                    <div class="text-2xl font-bold text-[#D4AF37]">{{ bids_count }}</div>
+                    <div class="text-xs text-gray-500">Ставок</div>
+                </div>
+                <div class="bg-[#121212] px-4 py-3 rounded-lg border border-gray-700">
+                    <div class="text-2xl font-bold text-[#D4AF37]">{{ favorites_count }}</div>
+                    <div class="text-xs text-gray-500">Избранных</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs Navigation -->
+    <div class="bg-[#1E1E1E] rounded-lg border border-gray-800 mb-6 overflow-x-auto">
+        <nav class="flex min-w-max md:min-w-0" role="tablist">
+            <button onclick="switchTab('listings')" id="tab-listings" class="tab-btn flex-1 px-6 py-4 text-center font-semibold transition border-b-2 border-[#D4AF37] text-[#D4AF37] bg-[#121212]">
+                📦 Мои объявления
+            </button>
+            <button onclick="switchTab('bids')" id="tab-bids" class="tab-btn flex-1 px-6 py-4 text-center font-semibold transition border-b-2 border-transparent text-gray-400 hover:text-[#D4AF37] hover:bg-[#2A2A2A]">
+                🔨 Мои ставки
+            </button>
+            <button onclick="switchTab('favorites')" id="tab-favorites" class="tab-btn flex-1 px-6 py-4 text-center font-semibold transition border-b-2 border-transparent text-gray-400 hover:text-[#D4AF37] hover:bg-[#2A2A2A]">
+                ⭐ Избранное
+            </button>
+            <button onclick="switchTab('reviews')" id="tab-reviews" class="tab-btn flex-1 px-6 py-4 text-center font-semibold transition border-b-2 border-transparent text-gray-400 hover:text-[#D4AF37] hover:bg-[#2A2A2A]">
+                💬 Отзывы
+            </button>
+            <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex-1 px-6 py-4 text-center font-semibold transition border-b-2 border-transparent text-gray-400 hover:text-[#D4AF37] hover:bg-[#2A2A2A]">
+                ⚙️ Настройки
+            </button>
+        </nav>
+    </div>
+    
+    <!-- Tab Content: My Listings -->
+    <div id="content-listings" class="tab-content">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Мои объявления</h2>
+            <a href="{% url 'add_animal' %}" class="px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold rounded-lg hover:from-[#FFD700] hover:to-[#D4AF37] transition shadow-lg">
+                ➕ Добавить объявление
+            </a>
+        </div>
+        
+        {% if my_animals %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for animal in my_animals %}
+            <div class="bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 hover:border-[#D4AF37] transition">
+                <!-- Image -->
+                <a href="{% url 'animal_detail' animal.pk %}">
+                    <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-full h-48 object-cover">
+                </a>
+                
+                <!-- Content -->
+                <div class="p-4">
+                    <a href="{% url 'animal_detail' animal.pk %}">
+                        <h3 class="text-lg font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">{{ animal.title }}</h3>
+                    </a>
+                    
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        {% if animal.is_approved %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-900/30 text-green-400 border border-green-700">
+                            ✓ Одобрено
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-900/30 text-yellow-400 border border-yellow-700">
+                            ⏳ На модерации
+                        </span>
+                        {% endif %}
+                        {% if animal.is_vip %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37] ml-2">
+                            ⭐ VIP
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-2xl font-bold text-[#D4AF37] mb-3">{{ animal.price }} TJS</div>
+                    
+                    <!-- Actions -->
+                    <div class="flex gap-2">
+                        <a href="{% url 'edit_animal' animal.pk %}" class="flex-1 px-4 py-2 bg-[#D4AF37] text-black text-center font-semibold rounded-lg hover:bg-[#C5A028] transition">
+                            ✏️ Редактировать
+                        </a>
+                        <a href="{% url 'delete_animal' animal.pk %}" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                            🗑️
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+            <div class="text-6xl mb-4">📦</div>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">Нет объявлений</h3>
+            <p class="text-gray-500 mb-6">У вас пока нет размещенных объявлений</p>
+            <a href="{% url 'add_animal' %}" class="inline-block px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#C5A028] transition">
+                ➕ Добавить первое объявление
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tab Content: My Bids -->
+    <div id="content-bids" class="tab-content hidden">
+        <h2 class="text-2xl font-bold mb-6">Мои ставки</h2>
+        
+        {% if my_bids %}
+        <div class="space-y-4">
+            {% for bid in my_bids %}
+            <div class="bg-[#1E1E1E] rounded-lg p-5 border border-gray-800 hover:border-[#D4AF37] transition">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <!-- Animal Image -->
+                    <a href="{% url 'animal_detail' bid.animal.pk %}" class="w-full md:w-48 h-32 flex-shrink-0">
+                        <img src="{{ bid.animal.main_photo.url }}" alt="{{ bid.animal.title }}" class="w-full h-full object-cover rounded-lg">
+                    </a>
+                    
+                    <!-- Bid Info -->
+                    <div class="flex-1">
+                        <a href="{% url 'animal_detail' bid.animal.pk %}">
+                            <h3 class="text-xl font-bold mb-2 hover:text-[#D4AF37] transition">{{ bid.animal.title }}</h3>
+                        </a>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Ваша ставка:</span>
+                                <span class="block text-2xl font-bold text-[#D4AF37]">{{ bid.amount }} TJS</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Текущая цена:</span>
+                                <span class="block text-xl font-semibold text-gray-300">{{ bid.animal.current_price }} TJS</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-sm text-gray-500">
+                            Сделана: {{ bid.created_at|date:"d.m.Y H:i" }}
+                        </div>
+                        
+                        {% if bid.animal.is_auction_active %}
+                        <div class="mt-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-900/30 text-green-400 border border-green-700">
+                                🔥 Аукцион активен
+                            </span>
+                        </div>
+                        {% elif bid.animal.winner == user %}
+                        <div class="mt-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]">
+                                🏆 Вы победили!
+                            </span>
+                        </div>
+                        {% else %}
+                        <div class="mt-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-gray-400 border border-gray-700">
+                                ⏱️ Аукцион завершён
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+            <div class="text-6xl mb-4">🔨</div>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">Нет ставок</h3>
+            <p class="text-gray-500">Вы еще не участвовали в аукционах</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tab Content: Favorites -->
+    <div id="content-favorites" class="tab-content hidden">
+        <h2 class="text-2xl font-bold mb-6">Избранное</h2>
+        
+        {% if favorites %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for animal in favorites %}
+            <div class="bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 hover:border-[#D4AF37] transition">
+                <a href="{% url 'animal_detail' animal.pk %}">
+                    <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4">
+                    <a href="{% url 'animal_detail' animal.pk %}">
+                        <h3 class="text-lg font-bold mb-2 hover:text-[#D4AF37] transition line-clamp-1">{{ animal.title }}</h3>
+                    </a>
+                    <div class="text-2xl font-bold text-[#D4AF37] mb-3">{{ animal.price }} TJS</div>
+                    <a href="{% url 'animal_detail' animal.pk %}" class="block text-center px-4 py-2 border-2 border-[#D4AF37] text-[#D4AF37] font-semibold rounded-lg hover:bg-[#D4AF37] hover:text-black transition">
+                        Подробнее
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+            <div class="text-6xl mb-4">⭐</div>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">Нет избранных</h3>
+            <p class="text-gray-500">Добавляйте объявления в избранное для быстрого доступа</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tab Content: Reviews -->
+    <div id="content-reviews" class="tab-content hidden">
+        <h2 class="text-2xl font-bold mb-6">Отзывы обо мне как продавце</h2>
+        
+        {% if reviews %}
+        <div class="space-y-4">
+            {% for review in reviews %}
+            <div class="bg-[#1E1E1E] rounded-lg p-5 border border-gray-800">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-semibold">{{ review.buyer.username }}</span>
+                            <span class="text-sm text-gray-500">{{ review.created_at|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="text-xl text-[#D4AF37]">{{ review.get_stars_display }}</div>
+                    </div>
+                </div>
+                {% if review.text %}
+                <p class="text-gray-300">{{ review.text }}</p>
+                {% else %}
+                <p class="text-gray-500 italic">Без комментария</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 bg-[#1E1E1E] rounded-lg border border-gray-800">
+            <div class="text-6xl mb-4">💬</div>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">Нет отзывов</h3>
+            <p class="text-gray-500">Пока никто не оставил отзыв о вас как о продавце</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tab Content: Settings -->
+    <div id="content-settings" class="tab-content hidden">
+        <h2 class="text-2xl font-bold mb-6">Настройки профиля</h2>
+        
+        <div class="bg-[#1E1E1E] rounded-lg p-6 border border-gray-800 space-y-6">
+            <!-- Account Info -->
+            <div>
+                <h3 class="text-lg font-semibold text-[#D4AF37] mb-4">Информация об аккаунте</h3>
+                <div class="space-y-3 text-gray-300">
+                    <div class="flex justify-between py-2 border-b border-gray-700">
+                        <span class="text-gray-500">Имя пользователя:</span>
+                        <span class="font-semibold">{{ user.username }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-700">
+                        <span class="text-gray-500">Email:</span>
+                        <span class="font-semibold">{{ user.email|default:"Не указан" }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-700">
+                        <span class="text-gray-500">Дата регистрации:</span>
+                        <span class="font-semibold">{{ user.date_joined|date:"d.m.Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIP Status -->
+            <div>
+                <h3 class="text-lg font-semibold text-[#D4AF37] mb-4">VIP Статус</h3>
+                <div class="bg-gradient-to-r from-[#D4AF37]/10 to-[#FFD700]/10 border-2 border-[#D4AF37] rounded-lg p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#D4AF37] mb-2">⭐ VIP Размещение</h4>
+                            <p class="text-gray-300 text-sm mb-1">• Ваши объявления с золотой рамкой</p>
+                            <p class="text-gray-300 text-sm mb-1">• Показываются первыми в каталоге</p>
+                            <p class="text-gray-300 text-sm">• До 6 фотографий вместо 4</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'vip_request' %}" class="mt-4 block text-center px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold rounded-lg hover:from-[#FFD700] hover:to-[#D4AF37] transition shadow-lg">
+                        🌟 Подключить VIP
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div>
+                <h3 class="text-lg font-semibold text-[#D4AF37] mb-4">Действия</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'password_change' %}" class="block px-6 py-3 bg-[#2A2A2A] text-center border border-gray-700 rounded-lg hover:border-[#D4AF37] hover:bg-[#121212] transition">
+                        🔒 Изменить пароль
+                    </a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-6 py-3 bg-red-900/20 text-red-400 border border-red-700 rounded-lg hover:bg-red-900/40 transition">
+                            🚪 Выйти из аккаунта
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+    // Hide all content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Reset all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-[#D4AF37]', 'text-[#D4AF37]', 'bg-[#121212]');
+        btn.classList.add('border-transparent', 'text-gray-400');
+    });
+    
+    // Show selected content
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    
+    // Highlight selected tab
+    const selectedTab = document.getElementById('tab-' + tabName);
+    selectedTab.classList.add('border-[#D4AF37]', 'text-[#D4AF37]', 'bg-[#121212]');
+    selectedTab.classList.remove('border-transparent', 'text-gray-400');
+    
+    // Save to localStorage
+    localStorage.setItem('activeTab', tabName);
+}
+
+// Restore last active tab on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const lastTab = localStorage.getItem('activeTab') || 'listings';
+    switchTab(lastTab);
+});
+</script>
+{% endblock %}

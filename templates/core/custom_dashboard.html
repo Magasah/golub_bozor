@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Command Center - ГолубБозор{% endblock %}
+{% block title %}Command Center - ЗооБозор{% endblock %}
 
 {% block content %}
 <!-- Header Section -->
@@ -29,14 +29,14 @@
         <p class="text-gray-400 text-sm">Registered users</p>
     </div>
     
-    <!-- Total Pigeons -->
+    <!-- Total animals -->
     <div class="bg-[#1E1E1E] border-2 border-[#D4AF37] rounded-lg p-6 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition">
         <div class="flex items-center justify-between mb-4">
             <div class="text-4xl">🦅</div>
             <div class="text-xs text-gray-500 uppercase tracking-wider">Listings</div>
         </div>
-        <div class="text-5xl font-bold gold-text mb-2">{{ total_pigeons }}</div>
-        <p class="text-gray-400 text-sm">Total pigeons</p>
+        <div class="text-5xl font-bold gold-text mb-2">{{ total_animals }}</div>
+        <p class="text-gray-400 text-sm">Total animals</p>
     </div>
     
     <!-- Active Auctions -->
@@ -63,19 +63,19 @@
 <!-- Secondary Statistics -->
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
-        <div class="text-2xl gold-text font-bold mb-1">{{ approved_pigeons }}</div>
+        <div class="text-2xl gold-text font-bold mb-1">{{ approved_animals }}</div>
         <p class="text-gray-500 text-xs">✅ Approved</p>
     </div>
     <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
-        <div class="text-2xl gold-text font-bold mb-1">{{ pending_pigeons }}</div>
+        <div class="text-2xl gold-text font-bold mb-1">{{ pending_animals }}</div>
         <p class="text-gray-500 text-xs">⏳ Pending</p>
     </div>
     <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
-        <div class="text-2xl gold-text font-bold mb-1">{{ vip_pigeons }}</div>
+        <div class="text-2xl gold-text font-bold mb-1">{{ vip_animals }}</div>
         <p class="text-gray-500 text-xs">⭐ VIP</p>
     </div>
     <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-4">
-        <div class="text-2xl gold-text font-bold mb-1">{{ sold_pigeons }}</div>
+        <div class="text-2xl gold-text font-bold mb-1">{{ sold_animals }}</div>
         <p class="text-gray-500 text-xs">🎯 Sold</p>
     </div>
 </div>
@@ -92,7 +92,7 @@
         <a href="{% url 'manager_dashboard' %}" class="block px-6 py-4 bg-red-900/30 border-2 border-red-700 text-red-400 font-semibold rounded-lg hover:bg-red-900/50 transition text-center">
             💳 Payment Manager
         </a>
-        <a href="https://t.me/GolubBozorChannel" target="_blank" class="block px-6 py-4 bg-blue-900/30 border-2 border-blue-700 text-blue-400 font-semibold rounded-lg hover:bg-blue-900/50 transition text-center">
+        <a href="https://t.me/ZooBozorChannel" target="_blank" class="block px-6 py-4 bg-blue-900/30 border-2 border-blue-700 text-blue-400 font-semibold rounded-lg hover:bg-blue-900/50 transition text-center">
             📢 Telegram Channel
         </a>
     </div>
@@ -140,13 +140,13 @@
         <h2 class="text-2xl font-bold mb-4 flex items-center">
             <span class="mr-3">🦅</span> Recent Listings
         </h2>
-        {% if recent_pigeons %}
+        {% if recent_animals %}
         <div class="space-y-3">
-            {% for pigeon in recent_pigeons %}
+            {% for animal in recent_animals %}
             <div class="flex items-center justify-between p-3 bg-[#121212] rounded-lg border border-gray-800">
                 <div class="flex items-center space-x-3">
-                    {% if pigeon.image %}
-                    <img src="{{ pigeon.image.url }}" alt="{{ pigeon.title }}" class="w-12 h-12 object-cover rounded">
+                    {% if animal.main_photo %}
+                    <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-12 h-12 object-cover rounded">
                     {% else %}
                     <div class="w-12 h-12 bg-gray-700 rounded flex items-center justify-center text-2xl">
                         🦅
@@ -154,14 +154,14 @@
                     {% endif %}
                     <div>
                         <p class="font-semibold text-gray-200 line-clamp-1">
-                            {% if pigeon.is_vip %}⭐{% endif %} {{ pigeon.title }}
+                            {% if animal.is_vip %}⭐{% endif %} {{ animal.title }}
                         </p>
-                        <p class="text-xs text-gray-500">by @{{ pigeon.owner.username }}</p>
+                        <p class="text-xs text-gray-500">by @{{ animal.owner.username }}</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="font-bold gold-text">{{ pigeon.price|default:pigeon.start_price }} TJS</p>
-                    <p class="text-xs text-gray-600">{{ pigeon.created_at|date:"d.m H:i" }}</p>
+                    <p class="font-bold gold-text">{{ animal.price|default:animal.start_price }} TJS</p>
+                    <p class="text-xs text-gray-600">{{ animal.created_at|date:"d.m H:i" }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -174,6 +174,7 @@
 
 <!-- Footer Info -->
 <div class="mt-8 text-center text-gray-600 text-sm">
-    <p>🦅 GolubBozor Command Center • Last updated: {{ request.META.HTTP_HOST }} • Server time: {% now "H:i:s d.m.Y" %}</p>
+    <p>� ZooBozor Command Center • Last updated: {{ request.META.HTTP_HOST }} • Server time: {% now "H:i:s d.m.Y" %}</p>
 </div>
 {% endblock %}
+

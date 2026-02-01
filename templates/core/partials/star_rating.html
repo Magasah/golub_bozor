@@ -1,0 +1,57 @@
+<!-- ЗАДАЧА 2: Форма отзыва с интерактивными звездами (SVG) -->
+<div class="mb-6">
+    <label class="block text-gray-300 mb-4 font-semibold text-lg">Оценка</label>
+    <div class="flex gap-3 justify-center" id="star-rating-container">
+        {% for i in "12345" %}
+        <label class="cursor-pointer star-label" data-rating="{{ forloop.counter }}">
+            <input type="radio" name="rating" value="{{ forloop.counter }}" class="hidden peer rating-input" required>
+            <svg class="w-14 h-14 star-icon transition-all duration-200 text-gray-600 hover:scale-110" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+        </label>
+        {% endfor %}
+    </div>
+    <p class="text-center text-gray-400 text-sm mt-3">Кликните на звезду для оценки (1-5)</p>
+</div>
+
+<script>
+// Инициализация интерактивных звезд
+(function() {
+    const container = document.getElementById('star-rating-container');
+    if (!container) return;
+    
+    const stars = container.querySelectorAll('.star-label');
+    const inputs = container.querySelectorAll('.rating-input');
+    
+    function highlightStars(rating) {
+        stars.forEach((star, idx) => {
+            const icon = star.querySelector('.star-icon');
+            if (idx < rating) {
+                icon.classList.add('text-[#D4AF37]');
+                icon.classList.remove('text-gray-600');
+            } else {
+                icon.classList.remove('text-[#D4AF37]');
+                icon.classList.add('text-gray-600');
+            }
+        });
+    }
+    
+    stars.forEach((star, idx) => {
+        star.addEventListener('mouseenter', () => highlightStars(idx + 1));
+        star.addEventListener('click', () => {
+            inputs[idx].checked = true;
+            highlightStars(idx + 1);
+        });
+    });
+    
+    container.addEventListener('mouseleave', () => {
+        let selected = 0;
+        inputs.forEach((inp, idx) => {
+            if (inp.checked) selected = idx + 1;
+        });
+        highlightStars(selected);
+    });
+    
+    highlightStars(0);
+})();
+</script>

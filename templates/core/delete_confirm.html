@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Удалить объявление - ГолубБозор{% endblock %}
+{% block title %}Удалить объявление - ЗооБозор{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
@@ -8,9 +8,9 @@
         <h1 class="text-3xl font-bold text-red-500 mb-6">Удалить объявление?</h1>
         
         <div class="mb-6">
-            <img src="{{ pigeon.image.url }}" alt="{{ pigeon.title }}" class="w-full h-64 object-cover rounded-lg mb-4">
-            <h2 class="text-2xl font-bold mb-2">{{ pigeon.title }}</h2>
-            <p class="text-gray-400">{{ pigeon.description|truncatewords:30 }}</p>
+            <img src="{{ animal.main_photo.url }}" alt="{{ animal.title }}" class="w-full h-64 object-cover rounded-lg mb-4">
+            <h2 class="text-2xl font-bold mb-2">{{ animal.title }}</h2>
+            <p class="text-gray-400">{{ animal.description|truncatewords:30 }}</p>
         </div>
         
         <div class="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-6">
@@ -24,10 +24,11 @@
             <button type="submit" class="flex-1 px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition">
                 Да, удалить
             </button>
-            <a href="{% url 'pigeon_detail' pigeon.pk %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
+            <a href="{% url 'animal_detail' animal.pk %}" class="flex-1 text-center px-6 py-3 border-2 border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-gray-600 transition">
                 Отмена
             </a>
         </form>
     </div>
 </div>
 {% endblock %}
+
