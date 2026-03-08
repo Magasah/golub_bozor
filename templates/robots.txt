@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Не индексировать приватные страницы
+Disallow: /control_panel_secret_7828/
+Disallow: /accounts/
+Disallow: /dashboard/
+Disallow: /favorites/
+Disallow: /profile/
+
+# Ссылка на sitemap
+Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml

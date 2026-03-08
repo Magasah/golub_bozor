@@ -50,8 +50,8 @@ class AnimalAdmin(ModelAdmin):
     """
     Admin interface for Animal model with Unfold
     """
-    list_display = ['title', 'category', 'breed', 'gender', 'age', 'price', 'owner', 'is_approved', 'is_vip', 'listing_type', 'is_paid', 'payment_receipt_preview', 'current_price', 'is_sold', 'created_at']
-    list_filter = ['is_approved', 'is_vip', 'listing_type', 'is_paid', 'is_sold', 'category', 'gender', 'city', 'created_at']
+    list_display = ['title', 'category_badge', 'price', 'owner', 'city', 'is_approved', 'is_vip', 'listing_type', 'is_paid', 'payment_receipt_preview', 'created_at']
+    list_filter = ['is_approved', 'is_vip', 'listing_type', 'is_paid', 'is_sold', 'category', 'city', 'created_at']
     list_filter_submit = True  # Unfold feature: Submit button for filters
     search_fields = ['title', 'description', 'phone', 'owner__username', 'breed']
     list_editable = ['is_approved', 'is_vip', 'is_paid']
@@ -59,10 +59,34 @@ class AnimalAdmin(ModelAdmin):
     readonly_fields = ['created_at', 'updated_at', 'payment_receipt_display']
     inlines = [AnimalImageInline]
     list_per_page = 25  # Pagination
-    
+
+    @display(description='📁 Категория', ordering='category')
+    def category_badge(self, obj):
+        """Show category with coloured emoji badge"""
+        EMOJI = {
+            'cat': '🐈', 'dog': '🐕', 'pigeon': '🕊️', 'parrot': '🦜',
+            'horse': '🐎', 'cow': '🐄', 'sheep': '🐑', 'goat': '🐐',
+            'rabbit': '🐇', 'fish': '🐠', 'transport': '🚖',
+            'chicken': '🐔', 'canary': '🐦', 'hamster': '🐹',
+            'turtle': '🐢', 'partridge': '🦅',
+        }
+        COLOR = {
+            'transport': '#f59e0b', 'pigeon': '#10b981',
+            'cat': '#8b5cf6', 'dog': '#6366f1',
+            'cow': '#ef4444', 'sheep': '#ef4444', 'horse': '#ef4444', 'goat': '#ef4444',
+        }
+        emoji = EMOJI.get(obj.category, '🐾')
+        color = COLOR.get(obj.category, '#D4AF37')
+        label = obj.get_category_display().split('/')[0].strip()
+        return format_html(
+            '<span style="background:{}22;color:{};border:1px solid {}55;'
+            'padding:2px 8px;border-radius:12px;font-size:12px;white-space:nowrap;">'
+            '{} {}</span>',
+            color, color, color, emoji, label
+        )
+
     @display(description='🧾 Чек', ordering='payment_receipt')
     def payment_receipt_preview(self, obj):
-        """Display payment receipt as small thumbnail in list view"""
         if obj.payment_receipt:
             return format_html(
                 '<a href="{}" target="_blank"><img src="{}" width="50" height="50" style="object-fit: cover; border: 2px solid #D4AF37; border-radius: 4px;" /></a>',
@@ -70,7 +94,7 @@ class AnimalAdmin(ModelAdmin):
                 obj.payment_receipt.url
             )
         return '-'
-    
+
     @display(description='🧾 Чек оплаты (Превью)')
     def payment_receipt_display(self, obj):
         """Display payment receipt as large image in detail view"""
@@ -84,30 +108,38 @@ class AnimalAdmin(ModelAdmin):
         return format_html('<span style="color: #999;">Чек не загружен</span>')
     
     fieldsets = (
-        ('Основная информация', {
-            'fields': ('title', 'category', 'breed', 'gender', 'age', 'price', 'description', 'city')
+        ('📋 Основная информация', {
+            'fields': ('title', 'category', 'description', 'city', 'price', 'is_negotiable')
         }),
-        ('Тип продажи', {
-            'fields': ('listing_type', 'start_price', 'current_price')
-        }),
-        ('Аукцион', {
-            'fields': ('auction_end_date', 'is_sold', 'winner'),
+        ('🐾 Характеристики животного', {
+            'fields': ('breed', 'gender', 'age', 'weight', 'gender_livestock', 'color_variety', 'health_status', 'has_passport'),
             'classes': ('collapse',),
         }),
-        ('Оплата аукциона', {
+        ('🕊️ Поля для голубей', {
+            'fields': ('flight_duration', 'game_style'),
+            'classes': ('collapse',),
+        }),
+        ('🚖 Зоо-Такси (транспорт)', {
+            'fields': ('transport_type', 'route_from', 'route_to', 'departure_time', 'available_days', 'cargo_capacity'),
+            'classes': ('collapse',),
+        }),
+        ('💰 Тип продажи и аукцион', {
+            'fields': ('listing_type', 'start_price', 'current_price', 'auction_end_date', 'is_sold', 'winner'),
+        }),
+        ('🧾 Оплата аукциона', {
             'fields': ('payment_receipt_display', 'is_paid'),
             'classes': ('collapse',),
         }),
-        ('Контакты', {
+        ('📞 Контакты', {
             'fields': ('phone', 'whatsapp_number', 'telegram_username')
         }),
-        ('Медиа', {
+        ('📸 Медиа', {
             'fields': ('main_photo', 'video_url')
         }),
-        ('Владелец и статус', {
+        ('⭐ Владелец и статус', {
             'fields': ('owner', 'is_approved', 'is_vip')
         }),
-        ('Даты', {
+        ('🕐 Даты', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),

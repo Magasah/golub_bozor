@@ -194,8 +194,6 @@ def load_category_fields(request):
     context = {'category': category}
     
     return render(request, 'core/partials/form_fields.html', context)
-    
-    return render(request, 'core/add_animal.html', {'form': form})
 
 
 @login_required

@@ -1,59 +1,62 @@
-<!-- Поля для питомцев (Кошки, Собаки) -->
+<!-- 🐾 Поля для питомцев (Кошки, Собаки, Попугаи, Хомяки и др.) -->
+<p class="text-xs text-gray-500 mb-3">🐾 Специальные поля для домашних питомцев</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Порода питомца -->
+
+    <!-- Порода -->
     <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            🐱 Порода
-        </label>
-        <input 
-            type="text" 
-            name="pet_breed"
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">🧬 Порода</label>
+        <input type="text" name="breed"
             class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: Британская, Персидская, Немецкая овчарка"
-        >
+            placeholder="Например: Британская, Персидская, Немецкая овчарка">
     </div>
-    
+
     <!-- Возраст -->
     <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            📅 Возраст
-        </label>
-        <input 
-            type="text" 
-            name="age"
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">📅 Возраст</label>
+        <input type="text" name="age"
             class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: 2 месяца, 1 год"
-        >
+            placeholder="Например: 2 месяца, 1 год">
     </div>
-    
+
     <!-- Пол -->
     <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            ⚥ Пол
-        </label>
-        <select 
-            name="gender"
-            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-        >
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">⚥ Пол</label>
+        <select name="gender"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
             <option value="">Выберите пол</option>
             <option value="male">Самец</option>
             <option value="female">Самка</option>
             <option value="unknown">Не указано</option>
         </select>
     </div>
-    
+
+    <!-- Расцветка -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">🎨 Расцветка / Окрас</label>
+        <input type="text" name="color_variety"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: рыжий, чёрно-белый, серый">
+    </div>
+
+    <!-- Статус здоровья -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">🏥 Статус здоровья</label>
+        <select name="health_status"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+            <option value="unknown">Не указано</option>
+            <option value="healthy">Здоров</option>
+            <option value="vaccinated">Вакцинирован</option>
+            <option value="with_passport">Есть ветпаспорт</option>
+        </select>
+    </div>
+
     <!-- Паспорт/прививки -->
-    <div class="flex items-center">
+    <div class="flex items-center md:col-span-2">
         <label class="flex items-center space-x-3 cursor-pointer">
-            <input 
-                type="checkbox" 
-                name="has_passport"
-                value="true"
-                class="w-5 h-5 text-[#D4AF37] bg-gray-800 border-gray-700 rounded focus:ring-2 focus:ring-[#D4AF37]"
-            >
-            <span class="text-sm text-gray-300">
-                📋 Есть ветеринарный паспорт/прививки
-            </span>
+            <input type="checkbox" name="has_passport" value="true"
+                class="w-5 h-5 text-[#D4AF37] bg-gray-800 border-gray-700 rounded focus:ring-2 focus:ring-[#D4AF37]">
+            <span class="text-sm text-gray-300">📋 Есть ветеринарный паспорт / сделаны прививки</span>
         </label>
     </div>
+
 </div>

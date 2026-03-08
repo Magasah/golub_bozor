@@ -71,7 +71,7 @@
             <!-- Category Selection with HTMX -->
             <div>
                 <label for="{{ form.category.id_for_label }}" class="block text-lg font-semibold text-[#D4AF37] mb-2">
-                    📁 Категория животного *
+                    📁 Категория *
                 </label>
                 <select 
                     name="category" 
@@ -83,21 +83,60 @@
                     hx-include="[name='category']"
                     required
                 >
-                    <option value="">Выберите категорию</option>
+                    <option value="">— Выберите категорию —</option>
                     {% for value, label in form.category.field.choices %}
-                        <option value="{{ value }}">{{ label }}</option>
+                        <option value="{{ value }}" {% if form.category.value == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
                 {% if form.category.errors %}
                     <p class="text-red-500 text-sm mt-2">{{ form.category.errors.0 }}</p>
                 {% endif %}
             </div>
-            
-            <!-- ЗАДАЧА 3: Контейнер для динамических полей -->
-            <div id="specific-fields-container" class="border-2 border-[#D4AF37]/30 rounded-lg p-5 bg-[#1E1E1E]">
-                <p class="text-gray-500 text-center py-8">
-                    ⬆️ Выберите категорию, чтобы увидеть специфичные поля
-                </p>
+
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    📝 Название объявления *
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- ===== ДИНАМИЧЕСКИЕ ПОЛЯ ПО КАТЕГОРИИ (HTMX) ===== -->
+            <div id="specific-fields-container" class="border-2 border-[#D4AF37]/30 rounded-lg p-4 bg-[#121212] min-h-[60px]">
+                {% if form.category.value %}
+                    {# Если редактирование — показать нужный partial сразу #}
+                    {% with cat=form.category.value %}
+                    {% if cat == 'transport' %}
+                        {% include 'core/partials/transport_fields.html' %}
+                    {% elif cat == 'pigeon' %}
+                        {% include 'core/partials/pigeon_fields.html' %}
+                    {% elif cat in 'cow,sheep,goat,horse' %}
+                        {% include 'core/partials/livestock_fields.html' %}
+                    {% elif cat in 'cat,dog' %}
+                        {% include 'core/partials/pet_fields.html' %}
+                    {% else %}
+                        {% include 'core/partials/basic_fields.html' %}
+                    {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <p class="text-gray-500 text-center text-sm py-4">
+                        ⬆️ Выберите категорию — появятся нужные поля
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Город (общее поле для всех категорий) -->
+            <div>
+                <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
+                    🏙️ Ваш город *
+                </label>
+                {{ form.city }}
+                {% if form.city.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.city.errors.0 }}</p>
+                {% endif %}
             </div>
             
             <!-- Auction Fee Warning (Hidden by default) -->
@@ -150,163 +189,11 @@
                 </div>
             </div>
             
-            <!-- Title -->
-            <div>
-                <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Название *
-                </label>
-                {{ form.title }}
-                {% if form.title.errors %}
-                    <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
-                {% endif %}
-            </div>
-            
-            <!-- Breed, Age, Gender - Grid (Conditional Fields) -->
-            <div id="animalDetailsFields" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <!-- Breed -->
-                <div>
-                    <label for="{{ form.breed.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        Порода
-                    </label>
-                    {{ form.breed }}
-                    {% if form.breed.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.breed.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Age -->
-                <div>
-                    <label for="{{ form.age.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        Возраст
-                    </label>
-                    {{ form.age }}
-                    {% if form.age.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.age.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Gender -->
-                <div>
-                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        Пол
-                    </label>
-                    {{ form.gender }}
-                    {% if form.gender.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.gender.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- City -->
-                <div>
-                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        🏙️ Город *
-                    </label>
-                    {{ form.city }}
-                    {% if form.city.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.city.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Transport Fields (Visible only for transport category) -->
-            <div id="transportFields" class="hidden grid grid-cols-1 gap-4">
-                <!-- Transport Type -->
-                <div>
-                    <label for="{{ form.transport_type.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        🚗 Тип транспорта
-                    </label>
-                    {% if form.transport_type %}
-                        {{ form.transport_type }}
-                    {% else %}
-                        <input type="text" name="transport_type" placeholder="Маршрутка, микроавтобус и т.д." class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
-                    {% endif %}
-                </div>
-                
-                <!-- Route From -->
-                <div>
-                    <label for="{{ form.route_from.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        📍 Маршрут от (откуда)
-                    </label>
-                    {% if form.route_from %}
-                        {{ form.route_from }}
-                    {% else %}
-                        <input type="text" name="route_from" placeholder="Например: Душанбе" class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
-                    {% endif %}
-                </div>
-                
-                <!-- Route To -->
-                <div>
-                    <label for="{{ form.route_to.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                        🎯 Маршрут до (куда)
-                    </label>
-                    {% if form.route_to %}
-                        {{ form.route_to }}
-                    {% else %}
-                        <input type="text" name="route_to" placeholder="Например: Худжанд" class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Gender (Livestock variant) -->
-            <div class="hidden">
-                <label for="{{ form.gender_livestock.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Пол скота
-                </label>
-                {% if form.gender_livestock %}
-                    {{ form.gender_livestock }}
-                {% endif %}
-            </div>
-            
-            <!-- Weight -->
-            <div class="hidden">
-                <label for="{{ form.weight.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Вес (кг)
-                </label>
-                {% if form.weight %}
-                    {{ form.weight }}
-                {% endif %}
-            </div>
-            
-            <!-- Color Variety -->
-            <div class="hidden">
-                <label for="{{ form.color_variety.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Расцветка
-                </label>
-                {% if form.color_variety %}
-                    {{ form.color_variety }}
-                {% endif %}
-            </div>
-            
-            <!-- Flight Duration -->
-            <div class="hidden">
-                <label for="{{ form.flight_duration.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Длительность полета
-                </label>
-                {% if form.flight_duration %}
-                    {{ form.flight_duration }}
-                {% endif %}
-            </div>
-            
-            <!-- Game Style -->
-            <div class="hidden">
-                <label for="{{ form.game_style.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Стиль игры
-                </label>
-                {% if form.game_style %}
-                    {{ form.game_style }}
-                {% endif %}
-            </div>
-            
-            <!-- Health Status -->
-            <div class="hidden">
-                <label for="{{ form.health_status.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
-                    Статус здоровья
-                </label>
-                {% if form.health_status %}
-                    {{ form.health_status }}
-                {% endif %}
-            </div>
+            <!-- Title is above, skip duplicate -->
+            <!-- Breed, Age, Gender removed — they are in the HTMX partials now -->
 
+            <!-- Price -->
+            <div id="fixedPriceField">
                 <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-[#D4AF37] mb-2">
                     💰 Цена (TJS) *
                 </label>
@@ -314,6 +201,14 @@
                 {% if form.price.errors %}
                     <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
                 {% endif %}
+                
+                <!-- Negotiable Price Checkbox -->
+                <label class="flex items-center mt-3 cursor-pointer group">
+                    {{ form.is_negotiable }}
+                    <span class="ml-2 text-sm text-gray-400 group-hover:text-[#D4AF37] transition">
+                        🤝 Цена договорная (торг уместен)
+                    </span>
+                </label>
             </div>
             
             <!-- Auction Fields (Hidden by default) -->
@@ -661,17 +556,35 @@ function setupLoadingSpinner() {
 document.addEventListener('DOMContentLoaded', function() {
     toggleAuctionFields();
     setupLoadingSpinner();
-    console.log('Page loaded, scripts initialized');
     
-    // ЗАДАЧА 2: Initialize dynamic form fields
+    // Аукцион только для голубей (при загрузке страницы)
+    const catVal = document.querySelector('select[name="category"]')?.value;
     if (window.FormFieldManager) {
         FormFieldManager.initialize();
     }
+    if (catVal) {
+        const auctionLabel = document.querySelector('input[name="listing_type"][value="auction"]')?.closest('label');
+        if (auctionLabel) auctionLabel.style.display = (catVal === 'pigeon') ? '' : 'none';
+    }
+    
+    // При смене категории — контролируем доступность аукциона
+    document.querySelector('select[name="category"]')?.addEventListener('change', function(e) {
+        const auctionLabel = document.querySelector('input[name="listing_type"][value="auction"]')?.closest('label');
+        if (auctionLabel) {
+            if (e.target.value === 'pigeon') {
+                auctionLabel.style.display = '';
+            } else {
+                auctionLabel.style.display = 'none';
+                const fixedRadio = document.querySelector('input[name="listing_type"][value="fixed"]');
+                if (fixedRadio && !fixedRadio.checked) {
+                    fixedRadio.checked = true;
+                    toggleAuctionFields();
+                }
+            }
+        }
+    });
 });
 </script>
-
-<!-- ЗАДАЧА 2: Dynamic Form Fields Management -->
-<script src="{% static 'js/form-fields.js' %}"></script>
 
 {% endblock %}
 

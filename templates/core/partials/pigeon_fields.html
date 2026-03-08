@@ -1,72 +1,57 @@
-<!-- Поля для голубей -->
+<!-- 🕊️ Поля для голубей -->
+<p class="text-xs text-gray-500 mb-3">🕊️ Специальные поля для голубей</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
     <!-- Порода голубя -->
     <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            🕊️ Порода голубя *
-        </label>
-        <input 
-            type="text" 
-            name="pigeon_breed"
-            required
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">🕊️ Порода голубя *</label>
+        <input type="text" name="breed" required
             class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: Бойный, Николаевский, Статный"
-        >
+            placeholder="Например: Бойный, Николаевский, Статный, Такла">
     </div>
-    
-    <!-- Стиль игры/бой -->
-    <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            ⚔️ Стиль игры/бой
-        </label>
-        <input 
-            type="text" 
-            name="game_style"
-            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: Столбовой, Ленточный"
-        >
-    </div>
-    
-    <!-- Длительность полета -->
-    <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            ⏱️ Длительность полета
-        </label>
-        <input 
-            type="text" 
-            name="flight_duration"
-            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: 2-3 часа, до 5 часов"
-        >
-    </div>
-    
+
     <!-- Пол -->
     <div>
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            ⚥ Пол *
-        </label>
-        <select 
-            name="gender_pigeon"
-            required
-            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-        >
-            <option value="">Выберите пол</option>
-            <option value="male">Самец</option>
-            <option value="female">Самка</option>
-            <option value="pair">Пара</option>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">⚥ Пол</label>
+        <select name="gender"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+            <option value="">Выберите</option>
+            <option value="male">Самец (Нар)</option>
+            <option value="female">Самка (Мода)</option>
+            <option value="pair">Пара (Ҷуфт)</option>
         </select>
     </div>
-    
-    <!-- Возраст -->
-    <div class="md:col-span-2">
-        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">
-            📅 Возраст
-        </label>
-        <input 
-            type="text" 
-            name="age"
+
+    <!-- Расцветка -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">🎨 Расцветка / Окрас</label>
+        <input type="text" name="color_variety"
             class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-            placeholder="Например: 1 год, 6 месяцев"
-        >
+            placeholder="Например: сизый, белый, пёстрый, чёрный">
     </div>
+
+    <!-- Возраст -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">📅 Возраст</label>
+        <input type="text" name="age"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 6 месяцев, 1 год, 2 года">
+    </div>
+
+    <!-- Стиль игры/бой -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">⚔️ Стиль игры / Бой</label>
+        <input type="text" name="game_style"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: Столбовой, Ленточный, Двухчубый">
+    </div>
+
+    <!-- Длительность полета -->
+    <div>
+        <label class="block text-sm font-semibold text-[#D4AF37] mb-2">⏱️ Длительность полёта</label>
+        <input type="text" name="flight_duration"
+            class="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-[#121212] text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            placeholder="Например: 2-3 часа, до 5 часов">
+    </div>
+
 </div>

@@ -157,9 +157,12 @@ class AnimalForm(forms.ModelForm):
         model = Animal
         fields = [
             'category', 'title', 'description', 'gender', 'age', 'breed',
-            'price', 'listing_type', 'start_price', 'auction_end_date', 'payment_receipt',
+            'price', 'is_negotiable', 'listing_type', 'start_price', 'auction_end_date', 'payment_receipt',
             'main_photo', 'video_url', 'city', 'phone', 'whatsapp_number', 'telegram_username',
-            'is_vip', 'transport_type', 'route_from', 'route_to'
+            'is_vip', 'transport_type', 'route_from', 'route_to',
+            'departure_time', 'available_days', 'cargo_capacity',
+            'weight', 'gender_livestock', 'color_variety', 'health_status',
+            'flight_duration', 'game_style', 'has_passport',
         ]
         widgets = {
             'category': forms.Select(attrs={

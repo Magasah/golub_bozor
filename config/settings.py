@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',   # sitemap.xml
     'axes',  # Django Axes for brute force protection
     'core.apps.CoreConfig',  # Our main app
 ]

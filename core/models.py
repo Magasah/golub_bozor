@@ -239,13 +239,69 @@ class Animal(models.Model):
         verbose_name='Куда',
         help_text='Куда доставляется животное'
     )
-    
+
+    departure_time = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Время отправления',
+        help_text='Например: 08:00, 14:00, 18:00'
+    )
+
+    available_days = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Дни работы',
+        help_text='Например: Ежедневно, Пн-Пт, По заявке'
+    )
+
+    cargo_capacity = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name='Вместимость / Тип груза',
+        help_text='Например: куры до 50 шт, собаки 2-3 головы, любые животные'
+    )
+
+    # Для питомцев / голубей
+    color_variety = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Расцветка / Масть',
+        help_text='Например: рыжий, чёрно-белый, сизый'
+    )
+
+    HEALTH_STATUS_CHOICES = [
+        ('healthy', 'Здоров'),
+        ('vaccinated', 'Вакцинирован'),
+        ('with_passport', 'Есть паспорт'),
+        ('unknown', 'Не указано'),
+    ]
+
+    health_status = models.CharField(
+        max_length=30,
+        choices=HEALTH_STATUS_CHOICES,
+        blank=True,
+        null=True,
+        default='unknown',
+        verbose_name='Статус здоровья',
+        help_text='Состояние здоровья животного'
+    )
+
     # ========== ЦЕНЫ И ТИП ПРОДАЖИ ==========
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         verbose_name='Цена',
         help_text='Цена в сомони (TJS)'
+    )
+    
+    is_negotiable = models.BooleanField(
+        default=False,
+        verbose_name='Цена договорная',
+        help_text='Отметьте, если цена обсуждается'
     )
     
     listing_type = models.CharField(
@@ -455,9 +511,6 @@ class Animal(models.Model):
         # Автоматически устанавливаем current_price из start_price для аукциона
         if self.listing_type == 'auction' and not self.current_price:
             self.current_price = self.start_price
-        
-        # Валидация перед сохранением
-        self.full_clean()
         
         # Добавляем водяной знак на фото перед сохранением
         if self.main_photo:
