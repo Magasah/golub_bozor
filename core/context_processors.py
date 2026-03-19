@@ -12,8 +12,10 @@ def get_holiday_theme(request):
     Возвращает:
         dict: {'holiday_theme': str|None, 'holiday_name': str|None}
     """
+    # Принудительно активируем Навруз для деплоя
     now = timezone.now().date()
     current_year = now.year
+    force_navruz = True
     
     # Праздничные периоды (диапазоны дат)
     holidays = {
@@ -48,6 +50,14 @@ def get_holiday_theme(request):
     }
     
     # Проверяем, попадает ли текущая дата в какой-либо праздничный период
+    if force_navruz:
+        navruz = holidays['navruz']
+        return {
+            'holiday_theme': navruz['class'],
+            'holiday_name': navruz['name'],
+            'holiday_emoji': navruz['emoji'],
+            'is_holiday': True
+        }
     for holiday_key, holiday_data in holidays.items():
         if holiday_data['start'] <= now <= holiday_data['end']:
             return {

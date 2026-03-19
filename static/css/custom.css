@@ -1,3 +1,46 @@
+/* =============================
+   NAVRUZ SPRING THEME
+   ============================= */
+.theme-navruz {
+    --accent: #39FF14; /* Neon Spring Green */
+    --accent-glow: 0 0 16px #39FF14, 0 0 32px #39FF14;
+    --accent-bg: rgba(57,255,20,0.08);
+    --accent-gradient: linear-gradient(90deg, #D4AF37 0%, #39FF14 100%);
+}
+
+.theme-navruz .navruz-glow {
+    text-shadow: 0 0 8px #39FF14, 0 0 16px #39FF14;
+    color: #39FF14 !important;
+}
+
+.theme-navruz .btn-gold, .theme-navruz .btn-luxury {
+    background: linear-gradient(135deg, #D4AF37 0%, #39FF14 100%) !important;
+    box-shadow: 0 0 16px #39FF14, 0 0 32px #D4AF37;
+    color: #121212 !important;
+}
+
+.theme-navruz .header-icon {
+    filter: drop-shadow(0 0 8px #39FF14);
+}
+
+/* Navruz Sprout Icon (SVG) */
+.navruz-sprout {
+    display: inline-block;
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: middle;
+    background: url('/static/img/navruz-sprout.svg') no-repeat center/contain;
+}
+
+.theme-navruz .gold-text {
+    color: #39FF14 !important;
+    text-shadow: 0 0 8px #39FF14;
+}
+
+.theme-navruz .glass-gold {
+    background: rgba(57,255,20,0.08);
+    border: 1px solid #39FF14;
+}
 /* ========================================
    GolubBozor - Custom Dark Luxury Styles
    ======================================== */

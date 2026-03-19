@@ -8,8 +8,7 @@ import dj_database_url
 from django.utils.translation import gettext_lazy as _
 
 # Загрузка переменных окружения из .env файла (для локальной разработки)
-from dotenv import load_dotenv
-load_dotenv()
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,14 +23,10 @@ ON_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
 # SECURITY WARNING: keep the secret key used in production secret!
 # 🔒 ВАЖНО: Для продакшена создайте новый SECRET_KEY и добавьте в .env
 # Генератор: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+c6f7b^h9k@8_h$l!@8m6+9q9&^3u0x_y9k8j7h6g5f4d3s2a1')
 
-# 🔒 SECURITY: DEBUG = False hides sensitive error pages and stack traces from users.
-# CRITICAL: Never set DEBUG = True in production! It exposes secret keys, file paths, and SQL queries.
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
-# 🔒 SECURITY: Only allow requests from these domains (prevents host header attacks)
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-+c6f7b^h9k@8_h$l!@8m6+9q9&^3u0x_y9k8j7h6g5f4d3s2a1')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # Для PythonAnywhere добавляем домен
 if ON_PYTHONANYWHERE:
@@ -155,9 +150,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
+
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # WhiteNoise configuration for static files (без Manifest для избежания ошибок)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'

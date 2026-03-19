@@ -75,7 +75,7 @@
         }
     </style>
 </head>
-<body class="bg-[#121212] text-gray-200 min-h-screen" data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
+<body class="bg-[#121212] text-gray-200 min-h-screen pt-safe pb-safe" style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);" data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
     
     <!-- Snow Container (Winter Mode) -->
     <div id="snow-container" class="fixed inset-0 pointer-events-none z-snow"></div>

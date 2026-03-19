@@ -1,12 +1,15 @@
 {
-  "name": "ZooBozor - Маркетплейс животных",
+  "name": "ZooBozor - Рынок Животных",
   "short_name": "ZooBozor",
-  "description": "Маркетплейс для продажи и покупки животных в Таджикистане: кошки, собаки, голуби, лошади, скот",
+  "description": "Таджикский онлайн рынок животных: купля-продажа коров, овец, голубей, кошек, собак и других животных",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
+  "background_color": "#000000",
   "theme_color": "#D4AF37",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ru",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/static/img/icon-192.png",
@@ -21,7 +24,13 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "shopping"],
-  "lang": "ru",
-  "dir": "ltr"
+  "categories": ["shopping", "business", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/static/screenshots/home.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
 }

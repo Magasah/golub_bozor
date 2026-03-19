@@ -26,8 +26,8 @@ urlpatterns = [
 # Основные URL patterns с поддержкой языков
 urlpatterns += i18n_patterns(
     # 🔒 SECURITY: Secret admin path. Do not share this URL publicly.
-    # Use this URL to access admin: /control_panel_secret_7828/
-    path('control_panel_secret_7828/', admin.site.urls),
+    # Use this URL to access admin: /boss_panel_secret/
+    path('boss_panel_secret/', admin.site.urls),
     path('', include('core.urls')),
     prefix_default_language=False,
 )
